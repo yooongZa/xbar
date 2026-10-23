@@ -5,13 +5,17 @@ options:
 settings:
   base:
     SWIFT_VERSION: '6.0'
-    MARKETING_VERSION: '0.5.1'
-    CURRENT_PROJECT_VERSION: '10'
+    MARKETING_VERSION: '0.5.2'
+    CURRENT_PROJECT_VERSION: '11'
     DEVELOPMENT_TEAM: 495S4FVMCB
     CODE_SIGN_STYLE: Manual
     CODE_SIGN_IDENTITY: '-'
     ENABLE_HARDENED_RUNTIME: YES
     MACOSX_DEPLOYMENT_TARGET: '14.0'
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    exactVersion: 2.9.6
 targets:
   TodayBar:
     type: application
@@ -35,6 +39,7 @@ targets:
         INFOPLIST_FILE: Info.plist
         CODE_SIGN_ENTITLEMENTS: TodayBar.entitlements
     dependencies:
+      - package: Sparkle
       - target: SafariExtension
         embed: true
       - sdk: SafariServices.framework

@@ -5,6 +5,8 @@ struct MenuPopoverView: View {
     static let height: CGFloat = 490
     @ObservedObject var controller: BrowserController
     @ObservedObject var content: ContentMonitor
+    @ObservedObject var updater: AppUpdater
+    let checkForUpdates: () -> Void
     let openPost: (ContentPost) -> Void
     let openOverview: () -> Void
     let privacy: () -> Void
@@ -30,7 +32,12 @@ struct MenuPopoverView: View {
                     Text("𝕏-Bar").font(.system(size: 13, weight: .semibold))
                     Spacer()
                     Text(controller.record?.account ?? L10n.text("계정 연결")).font(.system(size: 10)).foregroundStyle(.secondary)
-                    iconButton("gearshape", L10n.text("설정")) { showingSettings = true }
+                    iconButton("gearshape", L10n.text(updater.availableVersion == nil ? "설정" : "설정 · 새 버전 있음")) { showingSettings = true }
+                        .overlay(alignment: .topTrailing) {
+                            if updater.availableVersion != nil {
+                                Circle().fill(accent).frame(width: 5, height: 5).allowsHitTesting(false)
+                            }
+                        }
                 }
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     if controller.hasFreshValue {
@@ -147,6 +154,28 @@ struct MenuPopoverView: View {
                             Button(L10n.text("연결 관리"), action: setup).buttonStyle(.plain).foregroundStyle(accent)
                         }
                         if controller.connected { Button(L10n.text("연결 해제…"), action: disconnect).buttonStyle(.plain).foregroundStyle(.secondary) }
+                    }
+                    VStack(alignment: .leading, spacing: 10) {
+                        sectionLabel(L10n.text("앱 업데이트"))
+                        HStack {
+                            Text("X-Bar \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")")
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Button(L10n.text("업데이트 확인…"), action: checkForUpdates)
+                                .disabled(!updater.canCheckForUpdates)
+                        }
+                        if let version = updater.availableVersion {
+                            Text(L10n.format("update.available", version)).foregroundStyle(accent)
+                        }
+                        Toggle(L10n.text("새 버전 자동 확인"), isOn: Binding(
+                            get: { updater.automaticChecks }, set: { updater.setAutomaticChecks($0) }
+                        )).toggleStyle(.switch).controlSize(.small)
+                        Text(L10n.text("하루 한 번 확인합니다. 설치는 직접 선택할 수 있습니다."))
+                            .font(.system(size: 10)).foregroundStyle(.secondary)
+                        if let error = updater.startupError {
+                            Text(L10n.text("업데이트를 시작하지 못했습니다.") + " " + error)
+                                .font(.system(size: 10)).foregroundStyle(.secondary)
+                        }
                     }
                     Divider()
                     VStack(alignment: .leading, spacing: 12) {

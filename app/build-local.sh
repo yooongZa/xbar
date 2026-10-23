@@ -18,6 +18,13 @@ if [[ "$signing_identity" != "-" ]]; then
   timestamp_args=(--timestamp)
 fi
 cp "$project_root/../LICENSE" "$app_path/Contents/Resources/LICENSE.txt"
+cp "$project_root/../THIRD_PARTY_NOTICES.md" "$app_path/Contents/Resources/THIRD_PARTY_NOTICES.md"
+sparkle_path="$app_path/Contents/Frameworks/Sparkle.framework/Versions/B"
+# Sign nested helpers inside-out; each retains its own sandbox boundary.
+for helper in "$sparkle_path/XPCServices/Installer.xpc" "$sparkle_path/XPCServices/Downloader.xpc" "$sparkle_path/Autoupdate" "$sparkle_path/Updater.app"; do
+  codesign --force --sign "$signing_identity" "${timestamp_args[@]}" --options runtime --preserve-metadata=entitlements "$helper"
+done
+codesign --force --sign "$signing_identity" "${timestamp_args[@]}" --options runtime "$app_path/Contents/Frameworks/Sparkle.framework"
 codesign --force --sign "$signing_identity" "${timestamp_args[@]}" --options runtime --entitlements "$project_root/SafariExtension/SafariExtension.entitlements" "$app_path/Contents/PlugIns/X-Bar Safari.appex"
 codesign --force --sign "$signing_identity" "${timestamp_args[@]}" --options runtime --entitlements "$project_root/TodayBar.entitlements" "$app_path"
 codesign --verify --deep --strict --verbose=2 "$app_path"

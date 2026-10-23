@@ -38,5 +38,27 @@
 		<string>en</string>
 		<string>ja</string>
 	</array>
+	<key>SUFeedURL</key>
+	<string>https://yooongza.github.io/xbar/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>1B1TWAu18QVrbf5Qn7+5PHVOU3IBdq2InHZd2FH6Efo=</string>
+	<key>SUEnableInstallerLauncherService</key>
+	<true/>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUAutomaticallyUpdate</key>
+	<false/>
+	<key>SUAllowsAutomaticUpdates</key>
+	<false/>
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
+	<key>SUEnableSystemProfiling</key>
+	<false/>
+	<key>SUVerifyUpdateBeforeExtraction</key>
+	<true/>
+	<key>SURequireSignedFeed</key>
+	<true/>
+	<key>SUSignedFeedFailureExpirationInterval</key>
+	<integer>0</integer>
 </dict>
 </plist>

@@ -10,5 +10,10 @@
 	</array>
 	<key>com.apple.security.network.client</key>
 	<true/>
+	<key>com.apple.security.temporary-exception.mach-lookup.global-name</key>
+	<array>
+		<string>com.limod.xbar-spks</string>
+		<string>com.limod.xbar-spki</string>
+	</array>
 </dict>
 </plist>

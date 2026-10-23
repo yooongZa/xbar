@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var postWindow: NSWindow?
     private var setupWindow: NSWindow?
     private let safari = SafariConnection()
+    private let updater = AppUpdater()
     private var symbolTimer: Timer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -53,6 +54,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             return imported
         }
         updateStatus()
+        updater.start()
         if !UserDefaults.standard.bool(forKey: "setupCompleted") { showSetup() }
 
     }
@@ -68,6 +70,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         panelItem.keyEquivalentModifierMask = [.command, .shift]
         app.addItem(withTitle: L10n.text("X 분석 화면 열기"), action: #selector(showWindow), keyEquivalent: "o").target = self
         app.addItem(withTitle: L10n.text("로그인 · 시작 안내"), action: #selector(showSetup), keyEquivalent: "").target = self
+        app.addItem(withTitle: L10n.text("업데이트 확인…"), action: #selector(checkForUpdates), keyEquivalent: "").target = self
         app.addItem(.separator())
         app.addItem(withTitle: L10n.text("𝕏-Bar 종료"), action: #selector(quit), keyEquivalent: "q").target = self
         let editItem = NSMenuItem()
@@ -119,7 +122,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         guard let button = statusItem.button else { return }
         controller.content.markRead()
         popover.contentViewController = NSHostingController(rootView: MenuPopoverView(controller: controller,
-            content: controller.content, openPost: { [weak self] in self?.openPost($0) },
+            content: controller.content, updater: updater, checkForUpdates: { [weak self] in self?.checkForUpdates() }, openPost: { [weak self] in self?.openPost($0) },
             openOverview: { [weak self] in self?.showWindow() },
             privacy: { [weak self] in self?.showPrivacy() },
             disconnect: { [weak self] in self?.disconnect() }, quit: { [weak self] in self?.quit() },
@@ -184,6 +187,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         NSApp.activate(ignoringOtherApps: true); setupWindow?.makeKeyAndOrderFront(nil)
     }
 
+    @objc private func checkForUpdates() {
+        popover.performClose(nil)
+        // Present Sparkle after the transient popover has released keyboard focus.
+        Task { @MainActor [weak self] in self?.updater.checkForUpdates() }
+    }
+
     private func followCreator() {
         // Opens the public profile; following remains the user's action on X.
         NSWorkspace.shared.open(URL(string: "https://x.com/yongZa_R")!)
@@ -209,6 +218,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.5.0"
         alert.messageText = "𝕏-Bar \(version)"
         alert.informativeText = L10n.text("X 분석 화면의 오늘 총노출, 게시물 미리보기·노출·좋아요·재게시 수를 읽습니다. Safari 연결을 선택하면 사용자 동의 후 X 로그인 쿠키 3종을 암호화해 앱으로 전달합니다. 웹 로그인 정보는 이 Mac의 앱 저장소에 보관하며, 읽은 콘텐츠와 비교 기록은 메모리에서만 처리합니다. 개발자 서버·광고·추적 SDK를 사용하지 않습니다. X 및 로그인 제공자와의 웹 통신에는 각 서비스 정책이 적용됩니다.\n\n‘연결 해제’로 앱 웹 데이터를 삭제할 수 있습니다. 앱을 종료하면 갱신이 멈추고 비교 기록은 초기화됩니다.\n\nX의 공식 앱이 아닙니다. 자동 추출에 대한 X 이용 허락과 App Store 심사는 아직 확인되지 않았습니다.")
+        alert.informativeText += "\n\n" + L10n.text("update.privacy")
         alert.addButton(withTitle: L10n.text("확인"))
         alert.runModal()
     }

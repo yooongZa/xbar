@@ -15,3 +15,6 @@ xcuserdata/
 build/
 dist/
 __pycache__/
+
+# Local conversation, historical releases, recordings, and collection evidence.
+/archive/

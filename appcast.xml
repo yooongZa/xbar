@@ -1,0 +1,19 @@
+<?xml version="1.0" standalone="yes"?><!-- sparkle-sign-warning:
+IMPORTANT: This file was signed by Sparkle. Any modifications to this file requires re-signing this file with generate_appcast or sign_update! The signed signature will be embedded at the end of this file.
+--><rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>X-Bar</title>
+        <item>
+            <title>0.5.2</title>
+            <pubDate>Fri, 23 Oct 2026 15:51:40 +0900</pubDate>
+            <link>https://yooongza.github.io/xbar/</link>
+            <sparkle:version>11</sparkle:version>
+            <sparkle:shortVersionString>0.5.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/yooongZa/xbar/releases/download/v0.5.2/X-Bar-0.5.2-macOS-universal.zip" length="4881939" type="application/octet-stream" sparkle:edSignature="xNvVxmgU1KnbpILOelJlG3eor4LSSaLl8wyVBcMegPpjiED3k2LU4eefs9DXVxceaLNaOJwdaD4ZIqSkDV8TDg=="></enclosure>
+        </item>
+    </channel>
+</rss><!-- sparkle-signatures:
+edSignature: s2xfIGm8eSNOJArOD3U03Lji7gJzZWjm6RlX0g5cIKLElhD5QV87aSBaLgBjErufeYU6HxGa2QfcDnwQP4KMCA==
+length: 1106
+-->

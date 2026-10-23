@@ -30,6 +30,7 @@ WebサイトからDMGをダウンロードし、X-Barをアプリケーション
 - [English guide & build instructions](README.en.md)
 - [日本語ガイド・ビルド方法](README.ja.md)
 - [App source](app/) · [Release history](https://github.com/yooongZa/xbar/releases) · [Security](SECURITY.md)
+- [Update behavior & release preparation / 업데이트 동작·배포 절차](docs/UPDATES.md)
 
 ## License / 라이선스 / ライセンス
 

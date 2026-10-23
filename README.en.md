@@ -43,7 +43,7 @@ Today’s total is checked every 10 minutes by default; Settings offers 5, 10, o
 
 “Since first checked” compares a post’s current number with the first value observed by the app. It is not a full-day total. Restarting the app or changing the account, date, or selected period can reset the baseline.
 
-Get new versions from the same download page. Automatic updates are not currently included.
+Starting with 0.5.2, use **Check for Updates** in Settings. X-Bar checks once a day unless you turn off automatic checks. Choosing **Install** continues through download, installation, and relaunch.
 
 ## Privacy and help
 
