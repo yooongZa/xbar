@@ -1,0 +1,53 @@
+{
+  "description": {
+    "message": "사용자의 확인을 통해 𝕏 로그인 세션을 𝕏-Bar와 연동합니다."
+  },
+  "action_title": {
+    "message": "𝕏-Bar 연결"
+  },
+  "heading": {
+    "message": "Safari의 X 계정 연결"
+  },
+  "intro": {
+    "message": "사용자의 확인을 통해 𝕏 로그인 세션을 𝕏-Bar와 연동합니다."
+  },
+  "consent": {
+    "message": "이 Mac의 𝕏-Bar에 X 로그인 세션을 연결합니다."
+  },
+  "details": {
+    "message": "계정 접근에 필요한 로그인 쿠키 3종을 앱에 전달합니다. 준비가 끝난 뒤 연결을 누르세요. 연결 후에는 Safari를 종료해도 갱신됩니다."
+  },
+  "connect": {
+    "message": "𝕏-Bar에 연결"
+  },
+  "ready": {
+    "message": "Safari 확장 설정과 로그인은 시간 제한 없이 진행하세요."
+  },
+  "confirm_first": {
+    "message": "로그인 세션 연동을 확인해 주세요."
+  },
+  "connecting": {
+    "message": "𝕏-Bar와 연결하고 있습니다…"
+  },
+  "app_not_ready": {
+    "message": "𝕏-Bar의 Safari 연결 안내를 열고 다시 연결해 주세요. Safari 로그인은 유지됩니다."
+  },
+  "success": {
+    "message": "세션을 연동했습니다. 𝕏-Bar에서 계정명과 오늘 노출 수를 확인하면 완료됩니다."
+  },
+  "expired": {
+    "message": "연결 요청이 만료됐습니다. Safari 로그인은 유지됩니다. 다시 연결해 주세요."
+  },
+  "no_session": {
+    "message": "Safari에서 X 로그인과 x.com 접근 허용을 마친 뒤 다시 연결해 주세요."
+  },
+  "failed": {
+    "message": "연결에 실패했습니다. Safari 로그인은 유지됩니다. 다시 연결해 주세요."
+  },
+  "checking": {
+    "message": "𝕏-Bar에서 확인 중"
+  },
+  "retry": {
+    "message": "다시 연결"
+  }
+}

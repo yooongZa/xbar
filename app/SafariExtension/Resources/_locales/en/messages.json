@@ -1,0 +1,53 @@
+{
+  "description": {
+    "message": "Connect your X sign-in session to X-Bar after your confirmation."
+  },
+  "action_title": {
+    "message": "Connect X-Bar"
+  },
+  "heading": {
+    "message": "Connect your Safari X account"
+  },
+  "intro": {
+    "message": "Your X session is linked to X-Bar after you confirm."
+  },
+  "consent": {
+    "message": "Connect my X sign-in session to X-Bar on this Mac."
+  },
+  "details": {
+    "message": "Transfers the three sign-in cookies needed to access your account. Choose Connect when ready. After connecting, X-Bar can refresh even when Safari is closed."
+  },
+  "connect": {
+    "message": "Connect to X-Bar"
+  },
+  "ready": {
+    "message": "Take your time enabling the extension and signing in to Safari."
+  },
+  "confirm_first": {
+    "message": "Please confirm the session connection first."
+  },
+  "connecting": {
+    "message": "Connecting to X-Bar…"
+  },
+  "app_not_ready": {
+    "message": "Open Safari connection setup in X-Bar and reconnect. You remain signed in to Safari."
+  },
+  "success": {
+    "message": "Session linked. Setup completes when X-Bar verifies your account and today’s impressions."
+  },
+  "expired": {
+    "message": "The request expired. You remain signed in to Safari. Please reconnect."
+  },
+  "no_session": {
+    "message": "Sign in to X in Safari, allow access to x.com, then reconnect."
+  },
+  "failed": {
+    "message": "Connection failed. You remain signed in to Safari. Please reconnect."
+  },
+  "checking": {
+    "message": "Checking in X-Bar"
+  },
+  "retry": {
+    "message": "Reconnect"
+  }
+}

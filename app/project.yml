@@ -1,0 +1,73 @@
+name: TodayBar
+options:
+  deploymentTarget:
+    macOS: '14.0'
+settings:
+  base:
+    SWIFT_VERSION: '6.0'
+    MARKETING_VERSION: '0.5.1'
+    CURRENT_PROJECT_VERSION: '10'
+    DEVELOPMENT_TEAM: 495S4FVMCB
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: '-'
+    ENABLE_HARDENED_RUNTIME: YES
+    MACOSX_DEPLOYMENT_TARGET: '14.0'
+targets:
+  TodayBar:
+    type: application
+    platform: macOS
+    sources:
+      - Sources/TodayBar
+      - path: Sources/TodayBarCore
+        excludes: [Resources]
+      - path: Sources/TodayBarCore/Resources
+        buildPhase: resources
+      - Shared
+      - path: Resources
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.limod.xbar
+        PRODUCT_NAME: X-Bar
+        PRODUCT_MODULE_NAME: TodayBar
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SWIFT_OBJC_BRIDGING_HEADER: Sources/TodayBar/SafariStatusProbe.h
+        INFOPLIST_FILE: Info.plist
+        CODE_SIGN_ENTITLEMENTS: TodayBar.entitlements
+    dependencies:
+      - target: SafariExtension
+        embed: true
+      - sdk: SafariServices.framework
+      - sdk: Network.framework
+      - sdk: WebKit.framework
+      - sdk: CryptoKit.framework
+  SafariExtension:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: SafariExtension
+        excludes: [Info.plist, SafariExtension.entitlements, Resources]
+      - path: SafariExtension/Resources
+        excludes: [_locales]
+        buildPhase: resources
+      - path: SafariExtension/Resources/_locales
+        type: folder
+        buildPhase: resources
+      - Shared
+      - Sources/TodayBarCore/SessionTransfer.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.limod.xbar.SafariExtension
+        PRODUCT_NAME: X-Bar Safari
+        INFOPLIST_FILE: SafariExtension/Info.plist
+        CODE_SIGN_ENTITLEMENTS: SafariExtension/SafariExtension.entitlements
+        SKIP_INSTALL: YES
+        APPLICATION_EXTENSION_API_ONLY: YES
+    dependencies:
+      - sdk: SafariServices.framework
+      - sdk: CryptoKit.framework
+schemes:
+  TodayBar:
+    build:
+      targets:
+        TodayBar: all

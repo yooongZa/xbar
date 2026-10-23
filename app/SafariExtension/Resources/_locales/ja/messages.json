@@ -1,0 +1,53 @@
+{
+  "description": {
+    "message": "確認後にXのログインセッションをX-Barに連携します。"
+  },
+  "action_title": {
+    "message": "X-Barを連携"
+  },
+  "heading": {
+    "message": "SafariのXアカウントを連携"
+  },
+  "intro": {
+    "message": "確認後にXのログインセッションをX-Barに連携します。"
+  },
+  "consent": {
+    "message": "このMacのX-BarにXのログインセッションを連携します。"
+  },
+  "details": {
+    "message": "アカウントへのアクセスに必要なログインCookie3種類をアプリに転送します。準備ができたら連携を押してください。連携後はSafariを終了してもX-Barが更新できます。"
+  },
+  "connect": {
+    "message": "X-Barに連携"
+  },
+  "ready": {
+    "message": "Safari拡張機能の設定とログインには時間制限がありません。"
+  },
+  "confirm_first": {
+    "message": "ログインセッションの連携を確認してください。"
+  },
+  "connecting": {
+    "message": "X-Barに連携中…"
+  },
+  "app_not_ready": {
+    "message": "X-BarのSafari連携案内を開いて再連携してください。Safariのログインは維持されます。"
+  },
+  "success": {
+    "message": "セッションを連携しました。X-Barがアカウント名と今日の表示回数を確認すると完了です。"
+  },
+  "expired": {
+    "message": "リクエストの期限が切れました。Safariのログインは維持されます。再連携してください。"
+  },
+  "no_session": {
+    "message": "SafariでXにログインし、x.comへのアクセスを許可してから再連携してください。"
+  },
+  "failed": {
+    "message": "連携に失敗しました。Safariのログインは維持されます。再連携してください。"
+  },
+  "checking": {
+    "message": "X-Barで確認中"
+  },
+  "retry": {
+    "message": "再連携"
+  }
+}
