@@ -1,5 +1,21 @@
 import Foundation
 
+/// Reserve the next retry before starting I/O so redirects and failed loads cannot
+/// form a tight reload loop. A verified reading or an explicit refresh resets it.
+struct RefreshRetry: Sendable {
+    private(set) var nextAttempt = Date.distantPast
+    private var attempts = 0
+
+    mutating func begin(at now: Date) -> Bool {
+        guard now >= nextAttempt else { return false }
+        nextAttempt = now.addingTimeInterval(min(30 * pow(2, Double(min(attempts, 4))), 300))
+        attempts += 1
+        return true
+    }
+
+    mutating func reset() { self = Self() }
+}
+
 /// A successful page load is required after every invalidation. Old callbacks and
 /// repeated reads of a cached DOM cannot make an invalidated value current again.
 struct RefreshGate: Sendable {

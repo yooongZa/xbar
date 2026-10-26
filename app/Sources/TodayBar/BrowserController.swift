@@ -17,12 +17,14 @@ final class BrowserController: NSObject, ObservableObject, WKNavigationDelegate,
     @Published private(set) var stale = false
     @Published private(set) var disconnecting = false
     @Published private(set) var requiresLogin = false
+    @Published private(set) var retryAt: Date?
     @Published var intervalMinutes = UserDefaults.standard.integer(forKey: "refreshMinutes") == 0 ? 10 : UserDefaults.standard.integer(forKey: "refreshMinutes")
     var onChange: (() -> Void)?
     var onLoginNotice: (() -> Void)?
     private var timer: Timer?
     private var scanTask: Task<Void, Never>?
     private var freshness = RefreshGate()
+    private var retry = RefreshRetry()
     private var generation: Int { freshness.generation }
     @Published private(set) var networkOnline = false
     @Published private(set) var sleeping = false
@@ -59,7 +61,7 @@ final class BrowserController: NSObject, ObservableObject, WKNavigationDelegate,
             guard let self else { return }
             self.invalidateScan(clearRecord: true)
             self.message = L10n.text("X 계정이 바뀌었거나 로그인이 만료되어 다시 확인합니다.")
-            if NavigationPolicy.isAnalytics(self.webView.url) { self.refresh() }
+            if NavigationPolicy.canAutomaticallyRefresh(self.webView.url), !self.requiresLogin { self.refresh(automatically: true) }
             self.onChange?()
         }
         webView.navigationDelegate = self
@@ -91,13 +93,16 @@ final class BrowserController: NSObject, ObservableObject, WKNavigationDelegate,
         hasFreshValue && record?.account?.range(of: #"\A@[A-Za-z0-9_]{1,15}\z"#, options: .regularExpression) != nil
     }
     var display: String { hasFreshValue ? record!.display : "—" }
-    var showsSpinner: Bool { connected && !hasFreshValue }
+    var showsSpinner: Bool { connected && busy && networkOnline && !sleeping && !requiresLogin }
     var statusText: String {
         if !connected { return L10n.text("계정 연결 필요") }
         if sleeping { return L10n.text("잠자기 후 다시 확인합니다") }
         if !networkOnline { return L10n.text("인터넷 연결 대기") }
         if requiresLogin { return L10n.text("X 로그인 필요") }
-        if !hasFreshValue { return L10n.text("최신 노출 확인 중") }
+        if !hasFreshValue {
+            if busy { return L10n.text("최신 노출 확인 중") }
+            return L10n.text(retryAt == nil ? "X 분석 확인 필요" : "자동 재시도 대기")
+        }
         return record.map { L10n.format("checked.time", L10n.time($0.capturedAt)) } ?? ""
     }
 
@@ -106,14 +111,16 @@ final class BrowserController: NSObject, ObservableObject, WKNavigationDelegate,
         networkOnline = online
         invalidateForEnvironment()
         message = online ? L10n.text("연결이 복구되어 오늘 값을 다시 확인합니다…") : L10n.text("인터넷 연결을 기다리고 있습니다. 오래된 수치는 숨겼습니다.")
-        if online, connected, !sleeping, !disconnecting, NavigationPolicy.isAnalytics(webView.url) || webView.url == nil { refresh() }
+        if online { retry.reset() }
+        if online, connected, !sleeping, !disconnecting, !requiresLogin, NavigationPolicy.canAutomaticallyRefresh(webView.url) { refresh(automatically: true) }
         onChange?()
     }
     func sleepChanged(_ value: Bool) {
         sleeping = value
         invalidateForEnvironment()
         message = value ? L10n.text("잠자기에서 돌아오면 다시 확인합니다.") : L10n.text("잠자기에서 돌아와 오늘 값을 다시 확인합니다…")
-        if !value, networkOnline, connected, !disconnecting, NavigationPolicy.isAnalytics(webView.url) || webView.url == nil { refresh() }
+        if !value { retry.reset() }
+        if !value, networkOnline, connected, !disconnecting, !requiresLogin, NavigationPolicy.canAutomaticallyRefresh(webView.url) { refresh(automatically: true) }
         onChange?()
     }
     private func invalidateForEnvironment() {
@@ -194,10 +201,13 @@ final class BrowserController: NSObject, ObservableObject, WKNavigationDelegate,
         return true
     }
 
-    func refresh() {
+    func refresh(automatically: Bool = false) {
         guard connected, !disconnecting else { return }
         guard networkOnline, !sleeping else { invalidateForEnvironment(); onChange?(); return }
+        if !automatically { retry.reset() }
+        guard retry.begin(at: Date()) else { scheduleRetry(); return }
         invalidateScan(clearRecord: false)
+        retryAt = nil
         requiresLogin = false
         busy = true
         stale = record != nil
@@ -276,7 +286,14 @@ final class BrowserController: NSObject, ObservableObject, WKNavigationDelegate,
         scanTask?.cancel()
         scanTask = nil
         busy = false
+        retryAt = nil
         if clearRecord { record = nil; stale = false }
+    }
+
+    private func scheduleRetry() {
+        busy = false
+        retryAt = max(Date(), retry.nextAttempt)
+        onChange?()
     }
 
     private func tick() {
@@ -289,7 +306,7 @@ final class BrowserController: NSObject, ObservableObject, WKNavigationDelegate,
             content.reset()
             invalidateScan(clearRecord: true)
             message = L10n.text("날짜가 바뀌어 오늘 값을 다시 확인합니다.")
-            if connected, NavigationPolicy.isAnalytics(webView.url) { refresh() }
+            if connected, !requiresLogin, NavigationPolicy.canAutomaticallyRefresh(webView.url) { refresh(automatically: true) }
             onChange?()
         }
         if connected, hasFreshValue {
@@ -297,17 +314,33 @@ final class BrowserController: NSObject, ObservableObject, WKNavigationDelegate,
         }
         guard connected, !disconnecting, networkOnline, !sleeping else { return }
         if webView.isLoading, now.timeIntervalSince(lastReload) > 45 {
-            invalidateForEnvironment(); message = L10n.text("응답을 기다리고 있습니다. 잠시 후 다시 확인합니다."); onChange?()
+            invalidateForEnvironment(); message = L10n.text("응답을 기다리고 있습니다. 잠시 후 다시 확인합니다."); scheduleRetry()
+        }
+        if scanTask != nil, now.timeIntervalSince(lastScan) > 30 {
+            // Cancellation alone cannot stop a stalled WebKit callback. Invalidate
+            // its generation so a late result cannot restore an old reading.
+            invalidateForEnvironment()
+            message = L10n.text("페이지를 읽지 못했습니다. 자동으로 다시 시도합니다.")
+            scheduleRetry()
         }
         guard !webView.isLoading, scanTask == nil else { return }
+        if let retryAt {
+            if now >= retryAt, !requiresLogin {
+                // A loaded page may have gained a sign-in form or draft while
+                // waiting. Recheck its current context before navigating away.
+                if freshness.loaded { scan() }
+                else if NavigationPolicy.canAutomaticallyRefresh(webView.url) { refresh(automatically: true) }
+            }
+            return
+        }
         if !freshness.loaded {
-            if now.timeIntervalSince(lastReload) >= 30, NavigationPolicy.isAnalytics(webView.url) || webView.url == nil { refresh() }
+            if now.timeIntervalSince(lastReload) >= 30, !requiresLogin, NavigationPolicy.canAutomaticallyRefresh(webView.url) { refresh(automatically: true) }
             return
         }
         // Never refresh a password / verification form on a timer.
         if NavigationPolicy.isAnalytics(webView.url),
            now.timeIntervalSince(lastReload) >= Double(intervalMinutes * 60) {
-            refresh()
+            refresh(automatically: true)
         } else if now.timeIntervalSince(lastScan) >= 15 {
             scan()
         }
@@ -354,6 +387,16 @@ final class BrowserController: NSObject, ObservableObject, WKNavigationDelegate,
                         self.record = nil
                         self.stale = false
                     }
+                    if self.retryAt != nil, NavigationPolicy.isOverview(self.webView.url),
+                       !["login_required", "login_session_detected"].contains(reading.status) {
+                        if reading.canRecover == false {
+                            self.retryAt = nil
+                            self.message = L10n.text("X 화면을 확인해 주세요. 입력 중인 내용은 유지합니다.")
+                            return
+                        }
+                        self.refresh(automatically: true)
+                        return
+                    }
                     switch reading.status {
                     case "ready":
                         guard let account = reading.account,
@@ -376,6 +419,7 @@ final class BrowserController: NSObject, ObservableObject, WKNavigationDelegate,
                                 self.logger.notice("Accepted today reading; window visible: \(self.webView.window?.isVisible == true, privacy: .public)")
                             }
                             guard self.freshness.accept(token) else { return }
+                            self.retry.reset(); self.retryAt = nil
                             self.stale = false
                             self.attemptedLoginRecovery = false
                             self.content.resume()
@@ -395,25 +439,28 @@ final class BrowserController: NSObject, ObservableObject, WKNavigationDelegate,
                             return
                         }
                         self.requiresLogin = true
+                        self.retryAt = nil
                         self.content.reset()
                         self.record = nil
                         self.stale = false
                         self.message = L10n.text("X 화면에서 로그인해 주세요. 인증 절차는 X 화면에서 직접 진행합니다.")
                         return
                     case "off_page":
+                        if NavigationPolicy.canRecoverAnalytics(self.webView.url, reading: reading) {
+                            self.message = L10n.text("분석 화면으로 자동 복귀합니다.")
+                            self.refresh(automatically: true)
+                            return
+                        }
                         if NavigationPolicy.isAnalytics(self.webView.url) {
                             self.busy = false
                             self.message = L10n.text("다른 분석 화면을 보고 있습니다. 새로고침하면 오늘 요약으로 돌아갑니다.")
-                            if self.webView.window?.isVisible != true { self.refresh() }
+                            if self.webView.window?.isVisible != true { self.refresh(automatically: true) }
                             return
                         }
                         self.record = nil
                         self.stale = false
-                        if self.webView.url?.host == "x.com", self.webView.url?.path == "/home" {
-                            self.refresh()
-                        } else {
-                            self.message = L10n.text("로그인 완료 후 ‘새로고침’을 눌러 분석 화면을 열어 주세요.")
-                        }
+                        self.retryAt = nil
+                        self.message = L10n.text("X 화면을 확인해 주세요. 입력 중인 내용은 유지합니다.")
                         return
                     case "wrong_day", "manual_date":
                         self.record = nil
@@ -437,13 +484,15 @@ final class BrowserController: NSObject, ObservableObject, WKNavigationDelegate,
                     guard !Task.isCancelled, token == self.generation else { return }
                     self.busy = false
                     self.freshness.invalidate(); self.scanTask = nil
-                    self.stale = true; self.onChange?()
-                    self.message = L10n.text("페이지를 읽지 못했습니다. 연결 상태를 확인한 뒤 새로고침해 주세요.")
+                    self.stale = true
+                    self.message = L10n.text("페이지를 읽지 못했습니다. 자동으로 다시 시도합니다.")
+                    if !self.requiresLogin, NavigationPolicy.canAutomaticallyRefresh(self.webView.url) { self.scheduleRetry() }
                     return
                 }
             }
             self.record = nil
             self.message = L10n.text("오늘 값을 아직 확인하지 못했습니다. X 날짜 범위를 확인해 주세요.")
+            if !self.requiresLogin, NavigationPolicy.canAutomaticallyRefresh(self.webView.url) { self.scheduleRetry() }
         }
     }
 
@@ -476,13 +525,15 @@ final class BrowserController: NSObject, ObservableObject, WKNavigationDelegate,
         guard view === webView, (error as NSError).code != NSURLErrorCancelled, connected else { return }
         invalidateForEnvironment()
         message = L10n.text("X 페이지를 열지 못했습니다. 네트워크를 확인하고 다시 시도해 주세요.")
+        if !requiresLogin, NavigationPolicy.canAutomaticallyRefresh(webView.url) { scheduleRetry() }
         onChange?()
     }
 
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
         guard webView === self.webView else { return }
         invalidateForEnvironment()
-        message = L10n.text("웹 화면이 종료되었습니다. 새로고침하면 다시 연결합니다.")
+        message = L10n.text("웹 화면이 종료되어 자동으로 다시 연결합니다.")
+        if !requiresLogin, NavigationPolicy.canAutomaticallyRefresh(webView.url) { scheduleRetry() }
         onChange?()
     }
 

@@ -18,3 +18,6 @@ __pycache__/
 
 # Local conversation, historical releases, recordings, and collection evidence.
 /archive/
+
+# Local builds, tests and account-specific verification evidence.
+/outputs/

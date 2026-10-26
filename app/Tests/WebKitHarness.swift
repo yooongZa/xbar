@@ -78,6 +78,22 @@ final class Harness: NSObject, NSApplicationDelegate, WKNavigationDelegate {
             check("Extractor isolated from page world", pageGlobal == "undefined")
             check("Read with hidden native window", !window.isVisible && result["display"] as? String == "16.3K")
 
+            await load(account, path: "https://x.com/notifications")
+            result = try await read()
+            check("Signed-in notifications can return to analytics", result["status"] as? String == "off_page" && result["canRecover"] as? Bool == true)
+            await load(account + "<input autocomplete='one-time-code'>", path: "https://x.com/notifications")
+            result = try await read()
+            check("OTP on a normal route blocks automatic recovery", result["status"] as? String == "login_required" && result["canRecover"] as? Bool == false)
+            await load(account + "<textarea id='draft'></textarea>", path: "https://x.com/compose/post")
+            _ = try await js("const draft=document.getElementById('draft');draft.focus();draft.dispatchEvent(new Event('input',{bubbles:true}));draft.blur();'edited'", world: .page)
+            result = try await read()
+            check("Started draft blocks automatic recovery after blur", result["status"] as? String == "off_page" && result["canRecover"] as? Bool == false)
+            for path in ["/account/access", "/login", "/i/flow/challenge"] {
+                await load(account + "<input>", path: "https://x.com" + path)
+                result = try await read()
+                check("Authentication route protected: " + path, result["status"] as? String == "login_required" && result["canRecover"] as? Bool == false)
+            }
+
             await load(dateButton + card() + "<button aria-label='계정 메뉴'></button><a aria-label='프로필' href='/fixture'>프로필</a>" + dateScript())
             result = try await read()
             check("Account identity in narrow sidebar", result["account"] as? String == "@fixture")

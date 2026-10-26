@@ -39,9 +39,30 @@ struct PageReading: Codable, Sendable {
     var timeZone: String?
     var account: String?
     var action: String?
+    var canRecover: Bool?
 }
 
 enum NavigationPolicy {
+    /// Used when no current DOM reading is available, such as after waking up.
+    /// Authentication, settings and compose routes require an explicit page check.
+    static func canAutomaticallyRefresh(_ url: URL?) -> Bool {
+        guard let url else { return true }
+        guard isTrustedXPage(url) else { return false }
+        return isAnalytics(url) || ["/", "/home", "/notifications", "/notifications/verified",
+                                    "/notifications/mentions", "/explore"].contains(url.path)
+    }
+
+    static func canRecoverAnalytics(_ url: URL?, reading: PageReading) -> Bool {
+        guard let url, isTrustedXPage(url) else { return false }
+        return reading.status == "off_page" && reading.canRecover == true &&
+            reading.account?.range(of: #"\A@[A-Za-z0-9_]{1,15}\z"#, options: .regularExpression) != nil
+    }
+
+    private static func isTrustedXPage(_ url: URL) -> Bool {
+        url.scheme == "https" && url.user == nil && url.password == nil &&
+        (url.port == nil || url.port == 443) && ["x.com", "www.x.com"].contains(url.host?.lowercased() ?? "")
+    }
+
     static func isGoogle(_ url: URL) -> Bool {
         let host = url.host?.lowercased() ?? ""
         return host == "accounts.google.com" || host.hasSuffix(".accounts.google.com")

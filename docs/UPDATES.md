@@ -41,9 +41,10 @@ Sparkle **2.9.6**의 전체 배포 패키지와 앱의 공개키에 대응하는
 ```sh
 swift test --package-path app --scratch-path /private/tmp/xber-core-tests
 node --test app/Tests/popup-tests.cjs
+python3 app/Tests/run-navigation-recovery.py
 python3 app/Tests/run-review-integration.py
 TODAYBAR_SIGN_IDENTITY='Developer ID Application: roh yongwook (495S4FVMCB)' \
-  zsh app/build-local.sh archive/outputs/X-Bar-OpenSource-0.5.2
+  zsh app/build-local.sh archive/outputs/X-Bar-OpenSource-0.5.3
 ```
 
 3. 공개 배포 전 앱 ZIP을 `xcrun notarytool submit`으로 제출하고 승인·공증 로그를 확인합니다. 앱을 임시 폴더에 풀어 `xcrun stapler staple`로 확인서를 첨부합니다. `build-local.sh`는 공증을 자동 수행하지 않습니다.
@@ -59,7 +60,7 @@ python3 scripts/package-release.py "$STAPLED_APP" \
 
 ```sh
 python3 scripts/prepare-update.py \
-  archive/outputs/X-Bar-OpenSource-0.5.2/X-Bar-0.5.2-macOS-universal.zip \
+  archive/outputs/X-Bar-OpenSource-0.5.3/X-Bar-0.5.3-macOS-universal.zip \
   --tools "$SPARKLE_TOOLS_DIR" --feed appcast.xml
 ```
 
@@ -85,4 +86,4 @@ python3 app/Tests/build-updater-lab.py \
 4. `installed/X-Bar Updater Lab.app`을 열고 새 버전 확인·설치·재실행을 시험합니다. UI의 버전, `Saved preference`, `Synthetic login cookie`를 확인합니다. `--target-build 3 --candidate-only`로 다음 후보만 만들 수 있습니다.
 5. `served/.slow-download` 파일은 다운로드를 늦춰 취소를 시험합니다. 서명 후 feed나 ZIP 복사본을 변조해 차단되는지도 확인합니다. 시험 종료 후 해당 테스트 앱과 로컬 서버를 종료합니다.
 
-2026-10-23 결과는 [출시 검증 기록](releases/0.5.2.md)에 있습니다. Sparkle 공식 [사용자 인터페이스 확장](https://sparkle-project.org/documentation/customization/)과 [샌드박스 설정](https://sparkle-project.org/documentation/sandboxing/)을 확인했으며, DiskOUT의 명시적 설치 선택 유지 방식을 참고했습니다.
+0.5.3 결과는 [출시 검증 기록](releases/0.5.3.md)에, 이전 업데이트 설치 검증은 [0.5.2 기록](releases/0.5.2.md)에 있습니다. Sparkle 공식 [사용자 인터페이스 확장](https://sparkle-project.org/documentation/customization/)과 [샌드박스 설정](https://sparkle-project.org/documentation/sandboxing/)을 확인했으며, DiskOUT의 명시적 설치 선택 유지 방식을 참고했습니다.

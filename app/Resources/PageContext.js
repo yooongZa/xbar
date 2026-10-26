@@ -5,7 +5,8 @@
   const visible = el => !!el && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
   let credentialsStarted = false;
   document.addEventListener('input', event => {
-    if (event.target instanceof HTMLInputElement && visible(event.target)) credentialsStarted = true;
+    if (event.target instanceof HTMLElement && visible(event.target) &&
+        (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target.isContentEditable)) credentialsStarted = true;
   }, true);
   const snapshot = () => {
     const handles = [];
@@ -23,12 +24,14 @@
     const conflictingAccount = new Set(handles.map(value => value.toLowerCase())).size > 1;
     const account = conflictingAccount ? null : handles[0] || null;
     const loginRoute = /^\/i\/flow\/(login|signup)/.test(location.pathname) || /^\/i\/jf\/onboarding\//.test(location.pathname);
+    const authenticationRoute = loginRoute || /^\/(login|signup|account\/access)(?:\/|$)/.test(location.pathname) || /^\/i\/flow\//.test(location.pathname);
     const inputs = [...document.querySelectorAll('input')].filter(visible);
     const authenticationStep = inputs.some(el => el.type === 'password' || ['current-password', 'one-time-code'].includes(el.autocomplete));
-    const editing = credentialsStarted || inputs.includes(document.activeElement);
-    const authentication = loginRoute || authenticationStep
+    const editing = credentialsStarted || inputs.includes(document.activeElement) ||
+      document.activeElement instanceof HTMLTextAreaElement || document.activeElement?.isContentEditable;
+    const authentication = authenticationRoute || authenticationStep
       ? (loginRoute && account && !editing && !authenticationStep ? 'login_session_detected' : 'login_required') : null;
-    return {account, conflictingAccount, authentication};
+    return {account, conflictingAccount, authentication, canRecover: !conflictingAccount && !authentication && !editing};
   };
   // Validate a rendered date control when present, including locale-compacted ranges.
   const matchesRange = (label, from, to) => {

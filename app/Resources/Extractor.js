@@ -30,7 +30,7 @@
   const snapshot = () => {
     const now = today();
     const context = globalThis.XBarPageContext?.snapshot();
-    const base = {dayKey: now.dayKey, timeZone: now.timeZone, account: context?.account || null};
+    const base = {dayKey: now.dayKey, timeZone: now.timeZone, account: context?.account || null, canRecover: context?.canRecover === true};
     if (!['x.com', 'www.x.com'].includes(location.hostname) || location.protocol !== 'https:') return {...base, status: 'off_page'};
     if (!context || context.conflictingAccount) return {...base, status:'loading'};
     if (context.authentication) return {...base, status:context.authentication};

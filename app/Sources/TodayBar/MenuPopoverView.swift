@@ -44,7 +44,7 @@ struct MenuPopoverView: View {
                         Text(controller.display).font(.system(size: 32, weight: .semibold, design: .rounded)).monospacedDigit()
                         Text(L10n.text("오늘 노출")).font(.system(size: 11)).foregroundStyle(.secondary)
                     } else if controller.connected {
-                        ProgressView().controlSize(.small)
+                        if controller.showsSpinner { ProgressView().controlSize(.small) }
                         Text(controller.statusText).font(.system(size: 16, weight: .medium)).foregroundStyle(.secondary)
                     } else {
                         Button(L10n.text("X 계정 연결"), action: setup).buttonStyle(.borderedProminent)
@@ -74,8 +74,8 @@ struct MenuPopoverView: View {
             }.padding(.horizontal, 18).padding(.top, 13).padding(.bottom, 9)
             if rows.isEmpty {
                 VStack(spacing: 10) {
-                    Image(systemName: content.busy ? "ellipsis" : "text.bubble").font(.system(size: 20)).foregroundStyle(.tertiary)
-                    Text(growth && !content.ledger.rows.isEmpty ? L10n.text("다음 확인부터 증가량이 표시됩니다.") : content.message)
+                    Image(systemName: content.busy || controller.showsSpinner ? "ellipsis" : "text.bubble").font(.system(size: 20)).foregroundStyle(.tertiary)
+                    Text(!controller.hasFreshValue ? controller.message : growth && !content.ledger.rows.isEmpty ? L10n.text("다음 확인부터 증가량이 표시됩니다.") : content.message)
                         .font(.system(size: 11)).foregroundStyle(.secondary).multilineTextAlignment(.center)
                     if content.updatedAt != nil, !content.busy, !content.stale, content.ledger.rows.isEmpty {
                         if content.period == .today {

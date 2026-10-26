@@ -2,6 +2,26 @@ import XCTest
 @testable import TodayBarCore
 
 final class ReviewRegressionTests: XCTestCase {
+    func testRecoveryNeedsTrustedOriginVerifiedAccountAndSafeCurrentContext() throws {
+        var reading = PageReading(status: "off_page", account: "@fixture", canRecover: true)
+        for path in ["/notifications", "/notifications/mentions", "/home", "/fixture", "/i/account_analytics/content"] {
+            XCTAssertTrue(NavigationPolicy.canRecoverAnalytics(URL(string: "https://x.com" + path), reading: reading))
+        }
+        for url in ["http://x.com/notifications", "https://x.com.evil.example/notifications", "https://user:pass@x.com/notifications", "https://x.com:444/notifications"] {
+            XCTAssertFalse(NavigationPolicy.canRecoverAnalytics(URL(string: url), reading: reading))
+        }
+        reading.canRecover = false
+        XCTAssertFalse(NavigationPolicy.canRecoverAnalytics(URL(string: "https://x.com/notifications"), reading: reading))
+        reading.canRecover = true; reading.account = nil
+        XCTAssertFalse(NavigationPolicy.canRecoverAnalytics(URL(string: "https://x.com/notifications"), reading: reading))
+        XCTAssertTrue(NavigationPolicy.canAutomaticallyRefresh(nil))
+        for path in ["/notifications", "/home", "/i/account_analytics"] {
+            XCTAssertTrue(NavigationPolicy.canAutomaticallyRefresh(URL(string: "https://x.com" + path)))
+        }
+        for path in ["/i/flow/login", "/account/access", "/i/jf/onboarding/web", "/settings/password", "/compose/post"] {
+            XCTAssertFalse(NavigationPolicy.canAutomaticallyRefresh(URL(string: "https://x.com" + path)))
+        }
+    }
     func testAggregateOnlyReloadsOverview() {
         for path in ["", "/", "/overview", "/overview/"] {
             XCTAssertTrue(NavigationPolicy.isOverview(URL(string: "https://x.com/i/account_analytics" + path)))

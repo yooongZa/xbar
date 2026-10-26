@@ -4,6 +4,20 @@ import XCTest
 final class RefreshGateTests: XCTestCase {
     private let now = ISO8601DateFormatter().date(from: "2026-10-22T12:00:00Z")!
     private let zone = TimeZone(identifier: "Asia/Seoul")!
+    func testRetryBackoffPreventsRedirectLoopsAndResetsAfterRecovery() {
+        var retry = RefreshRetry()
+        var time = now
+        for delay: Double in [30, 60, 120, 240, 300, 300] {
+            XCTAssertTrue(retry.begin(at: time))
+            XCTAssertEqual(retry.nextAttempt, time.addingTimeInterval(delay))
+            XCTAssertFalse(retry.begin(at: time))
+            XCTAssertFalse(retry.begin(at: time.addingTimeInterval(delay - 0.1)))
+            time = retry.nextAttempt
+        }
+        retry.reset()
+        XCTAssertTrue(retry.begin(at: time))
+        XCTAssertEqual(retry.nextAttempt, time.addingTimeInterval(30))
+    }
     func testOldLoadAndReadCannotRestoreValueAfterDisconnectOrSleep() {
         var gate = RefreshGate()
         let old = gate.generation
