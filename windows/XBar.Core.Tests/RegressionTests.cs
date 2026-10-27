@@ -193,6 +193,21 @@ public sealed class RegressionTests
         Assert.Equal(count, card.RootElement.GetProperty("body").EnumerateArray().Count(e => e.TryGetProperty("selectAction", out _)));
         Assert.Equal(2, card.RootElement.GetProperty("actions").GetArrayLength());
     }
+    [Fact] public void LargeCardCombinesSimultaneousNoticesToLeaveRoomForActions()
+    {
+        var s = WithPosts() with { Status = CollectionStatus.Loading, IsCollecting = true, Surges = [new(Post(), 10, 10, Start)] };
+        using var card = JsonDocument.Parse(WidgetCard.Render(s, "Large", Start, Zone));
+        var notes = card.RootElement.GetProperty("body").EnumerateArray().Where(e => e.TryGetProperty("text", out var t) && t.GetString()!.Contains(L10n.T("surge", s.Settings.Language))).ToArray();
+        Assert.Single(notes); Assert.Contains(L10n.Status(s, Start, Zone), notes[0].GetProperty("text").GetString());
+        Assert.False(notes[0].GetProperty("wrap").GetBoolean());
+        Assert.Equal(2, card.RootElement.GetProperty("actions").GetArrayLength());
+    }
+    [Fact] public void CardTimeUsesTheProvidedZone()
+    {
+        var zone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Seoul");
+        var s = Ready() with { Today = new("1,234", "2026-10-26", MetricRecord.ZoneId(zone), "@fixture", Start) };
+        Assert.Contains("11:00", WidgetCard.Render(s, "Medium", Start, zone));
+    }
     [Fact] public void PlacementKeepsNegativeAndMixedDpiMonitorCoordinates()
     {
         PixelBounds[] areas = [new(-2560, -500, 2560, 1400), new(0, 0, 3840, 2080)];

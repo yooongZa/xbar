@@ -34,6 +34,11 @@ internal static class Theme
         bool light = true;
         try { using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"); light = key?.GetValue("AppsUseLightTheme") is not int value || value != 0; } catch (System.Security.SecurityException) { }
         Dark = TestMode == "dark" || TestMode != "light" && !light;
+        // Theme previews must switch the native controls as well as our own palette.
+        // Normal app windows retain Fluent's system theme and high-contrast tracking.
+#pragma warning disable WPF0001 // .NET 10 Fluent's theme selector is still marked experimental.
+        Application.Current.ThemeMode = TestMode == "light" ? ThemeMode.Light : TestMode == "dark" ? ThemeMode.Dark : ThemeMode.System;
+#pragma warning restore WPF0001
         var values = Dark
             ? new[] { "#171B21", "#20262E", "#F3F6FA", "#A9B5C4", "#343D49", "#2B3440", "#183D5B", "#8CCBFF", "#8CCBFF" }
             : new[] { "#F7F9FC", "#FFFFFF", "#18232F", "#536579", "#DDE4EC", "#EBF0F6", "#E0EFFC", "#005FA8", "#005FA8" };

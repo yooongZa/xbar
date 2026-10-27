@@ -41,7 +41,7 @@ foreach($file in @('App/XBar.exe','App/XBar.dll','App/XBar.Core.dll','Provider/X
 $core=$trx.TestRun.ResultSummary.Counters
 if([int]$core.failed -ne 0 -or [int]$core.passed -le 0){throw 'Core test results missing or failed'}
 $counts=@{core=[int]$core.passed}
-foreach($kind in @('layout','updater-ui')){
+foreach($kind in @('layout','updater-ui','settings')){
     $tests=@([IO.File]::ReadAllText((Join-Path $root "artifacts/tests/$kind-results.json"))|ConvertFrom-Json)
     if($tests.Count -eq 0 -or @($tests|Where-Object {$_.passed -ne $true}).Count){throw "Missing or failed $kind tests"}
     $counts[$kind]=$tests.Count
@@ -55,5 +55,5 @@ $json=$report|ConvertTo-Json -Depth 6
 $json|Set-Content (Join-Path $root 'artifacts/ci-build-proof.json') -Encoding utf8
 Write-Output $json
 if($env:GITHUB_STEP_SUMMARY){
-    @("## Windows source build proof",'',"Source: $source",'',"Core: $($counts.core); layout: $($counts.layout); updater: $($counts.'updater-ui').",'',"Package SHA-256: $($report.sha256)",'','Unsigned development proof. This run does not establish public signing, full WebView2 QA, or clean-PC installation.')|Add-Content $env:GITHUB_STEP_SUMMARY
+    @("## Windows source build proof",'',"Source: $source",'',"Core: $($counts.core); layout: $($counts.layout); updater: $($counts.'updater-ui'); settings: $($counts.settings).",'',"Package SHA-256: $($report.sha256)",'','Unsigned development proof. This run does not establish public signing, full WebView2 QA, or clean-PC installation.')|Add-Content $env:GITHUB_STEP_SUMMARY
 }

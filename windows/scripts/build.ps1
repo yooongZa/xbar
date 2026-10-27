@@ -16,5 +16,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Windows integration failed' }
     & $Dotnet XBar.WindowsTests/bin/$Configuration/net10.0-windows10.0.19041.0/win-x64/XBar.WindowsTests.dll artifacts/tests/updater-ui-results.json --updates-only
     if ($LASTEXITCODE -ne 0) { throw 'Updater integration failed' }
+    & $Dotnet XBar.WindowsTests/bin/$Configuration/net10.0-windows10.0.19041.0/win-x64/XBar.WindowsTests.dll artifacts/tests/settings-results.json --settings-only
+    if ($LASTEXITCODE -ne 0) { throw 'Settings integration failed' }
     }
 } finally { Pop-Location }

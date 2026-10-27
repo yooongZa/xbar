@@ -43,6 +43,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Layout tests failed' }
           dotnet $test windows/artifacts/tests/updater-ui-results.json --updates-only
           if ($LASTEXITCODE -ne 0) { throw 'Updater tests failed' }
+          dotnet $test windows/artifacts/tests/settings-results.json --settings-only
+          if ($LASTEXITCODE -ne 0) { throw 'Settings tests failed' }
           python -m unittest discover -s windows/scripts -p 'test_*.py'
           if ($LASTEXITCODE -ne 0) { throw 'Release tool tests failed' }
       - name: Package unsigned development proof
