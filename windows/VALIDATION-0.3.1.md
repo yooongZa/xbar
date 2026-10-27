@@ -26,6 +26,16 @@ Windows 보드의 외곽 프레임·기본 색상·버튼 형태는 Windows 호�
 - 실제 보드 Small 302×148, Medium 302×306, Large 302×464에서 버튼이 카드 안에 표시됨. 보드의 7일 선택이 실제 수집과 바탕화면 위젯에 반영되고 게시물 5개를 확인한 뒤 Today/Medium으로 복구.
 - 0.3.0.0 → 0.3.1.0 실제 MSIX 교체 후 로그인 유지, X 재수집 Ready. settings.json SHA-256 `70664079DF7310AA4953B99A40550944739745BF618D60C3A74CF7A0CBC0B605` 유지. 마지막 여백 보완 패키지는 0.3.1.1로 구분한다.
 
+## 최종 설치·정리
+
+- 최종 설치본 **LIMOD.XBar.Dev 0.3.1.1**, 임시 개발 서명 패키지 SHA-256 `cdd50fcaa776bd38d8a68411943087e576410a144491cc67cf2a71a05cefeae4`.
+- 실제 0.3.1.0 → 0.3.1.1 교체 후 설정과 업데이트 설정 보존. 15:58~15:59 KST 최종 설치본에서 설정 네 탭, 보드 세 크기, 바탕화면을 다시 캡처. 큰 보드에 게시물 5개, 중간 보드에 3개와 모든 버튼이 표시됨.
+- 시험 인증서 TrustedPeople 신뢰와 개인키를 제거한 뒤, 설정의 앱 종료로 PID 19412를 종료하고 PID 13088로 다시 실행. Ready, 로그인 유지, 새 수집 11.8K·게시물 3개 확인. 설정·업데이트 파일 해시도 동일.
+- Developer Mode는 시작과 종료 모두 미설정이며 이번 시험에서는 변경하지 않음. 자동 시작 Off, 자동 확인 On, Both/Today, 시스템 언어, 보드 Medium 복구. 마지막 확인 후 임시 예약 작업도 제거.
+- [GitHub 실행 40464143815](https://github.com/yooongZa/xbar/actions/runs/40464143815) 성공. 소스 `307ec70f9957558ab1707aa6272d1bb97f51e486`, SDK 10.0.114. Core 76 + 화면 4 + updater 22 + 설정 20, Python 1개 통과. 개발용 unsigned MSIX·공유 스크립트·제품 메타데이터 검사 성공. 산출물 업로드를 끄고 실행했으며 공개 설치 파일은 게시하지 않음. [CI 검사 원문](signpath/ci-build-proof-40464143815.json).
+
+변경 파일: `XBar.App/SettingsWindow.cs`, `XBar.App/Theme.cs`, `XBar.Core/WidgetCard.cs`, `XBar.Core/L10n.cs`, Core/Windows 시험 코드, 빌드·패키징·CI 검사 스크립트와 안내 문서. macOS 경로는 수정하지 않음.
+
 ## 실행과 증거
 
 ```text

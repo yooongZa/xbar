@@ -12,7 +12,11 @@ gh workflow run windows-build.yml --repo yooongZa/xbar --ref main -f upload_arti
 
 캐시를 사용하지 않으며 artifact(산출물) 업로드는 기본 꺼짐이다. 로그와 작업 요약에 소스 commit·시험 수·패키지 SHA-256을 남긴다. 공개 표준 실행기는 무료지만 산출물 저장의 계정별 무료 잔량은 별도로 확인한다. 업로드가 필요할 때만 확인 후 `upload_artifact=true`로 실행하며 보관 기간은 1일이다. 현재 읽기 권한으로 계정의 저장 과금 현황을 확인하지 못해 업로드를 실행하지 않는다. 과금 설정이나 예산을 변경하지 않는다.
 
-### 검증 완료 기록
+### 0.3.1 추가 검증
+
+[실행 40464143815](https://github.com/yooongZa/xbar/actions/runs/40464143815)은 소스 `307ec70f9957558ab1707aa6272d1bb97f51e486`에서 성공했다. Core 76, 화면 4, updater 22, 설정 20, Python 1개가 통과했고 unsigned 패키지 검사를 마쳤다. `upload_artifact=false`이며 공개 서명을 수행하지 않았다. [검사 결과](ci-build-proof-40464143815.json), [실기기 UX 검증](../VALIDATION-0.3.1.md)을 함께 참고한다.
+
+### 이전 검증 완료 기록
 
 - [실행 40458101405](https://github.com/yooongZa/xbar/actions/runs/40458101405): 성공. 소스 `328d575e89e0ef01826781cf6897827606f9a200`, .NET SDK `10.0.114`.
 - Core 74개, 화면 배치 4개, updater 22개, Python 배포 도구 1개가 모두 통과했다.
