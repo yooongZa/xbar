@@ -1,4 +1,4 @@
-param([string]$Version = '0.3.1.0', [string]$Identity = 'LIMOD.XBar.Dev', [string]$Publisher = 'CN=XBar Development', [string]$MakeAppx = '', [string]$LayoutPath = '', [switch]$UpdaterLab)
+param([string]$Version = '0.3.2.0', [string]$Identity = 'LIMOD.XBar.Dev', [string]$Publisher = 'CN=XBar Development', [string]$MakeAppx = '', [string]$LayoutPath = '', [switch]$UpdaterLab)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $layout = Join-Path $root 'artifacts/layout'

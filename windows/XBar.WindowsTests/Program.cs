@@ -139,9 +139,10 @@ internal static class Program
         var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap)); using (var file = File.Create(Path.Combine(output, "widget-preview.png"))) encoder.Save(file);
         widget.Close();
         int overviewRequests = 0;
-        string postAccount = "@fixture"; bool online = true; BrowserSurface? lastContent = null;
+        string postAccount = "@fixture"; bool online = true; BrowserSurface? lastContent = null, accountBrowser = null;
         var collectionRoot = Path.Combine(root, "collector");
         using var live = new Collector(new StateStore(collectionRoot), s => {
+            if (s.Window.ShowInTaskbar) accountBrowser = s;
             var browser = s.View.CoreWebView2;
             browser.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.All);
             browser.WebResourceRequested += (_, e) => {
@@ -162,8 +163,14 @@ internal static class Program
         await WaitFor(() => live.State.PostsCurrent);
         Check("Collector verifies overview and posts", live.State is { Status: CollectionStatus.Ready, PostsCurrent: true, Today.Display: "5,432", Posts.Length: 5 });
         Check("Two displays coalesce concurrent refresh requests", overviewRequests == 1, overviewRequests.ToString());
+        var verified = live.State;
+        await live.OpenBrowserAsync(login: true);
+        Check("Stale login command opens analytics without invalidating signed-in data", accountBrowser?.Url == "https://x.com/i/account_analytics" && live.State.Generation == verified.Generation && live.State.Today == verified.Today && live.State.PostsCurrent && live.Settings.Connected);
+        Check("Signed-in browser hides the whole login toolbar", !SettingsTests.FindById<DockPanel>(accountBrowser!.Window, "account.loginToolbar")!.IsVisible);
+        accountBrowser.Window.Close();
         var liveWidget = new DesktopWidget(live, _ => Task.CompletedTask) { AllowClose = true, Height = 330 };
         live.Changed += liveWidget.Refresh; liveWidget.Show(); liveWidget.Activate(); liveWidget.UpdateLayout();
+        Check("Signed-in widget menu offers analytics without a login action", liveWidget.BuildMenu().Items.OfType<MenuItem>().Any(m => m.Header.ToString() == L10n.T("analysis", live.Settings.Language)) && !liveWidget.BuildMenu().Items.OfType<MenuItem>().Any(m => m.Header.ToString() == L10n.T("login", live.Settings.Language)));
         var firstRow = liveWidget.PostControls.First(); firstRow.Focus(); liveWidget.PostsScroller.ScrollToVerticalOffset(24); liveWidget.UpdateLayout();
         var oldOffset = liveWidget.PostsScroller.VerticalOffset;
         live.RequestRefresh(true); liveWidget.Refresh(); liveWidget.UpdateLayout();
@@ -224,9 +231,23 @@ internal static class Program
         postAccount = "@different"; live.RequestRefresh(true);
         await WaitFor(() => live.State.Status == CollectionStatus.NeedsLogin);
         Check("Cross-page account mismatch clears metrics", live.State.Status == CollectionStatus.NeedsLogin && live.State.Today is null && live.State.Posts.Length == 0);
+        var expiredSettings = new SettingsWindow(live, new StateStore(collectionRoot), _ => Task.CompletedTask); expiredSettings.Show(); expiredSettings.Navigation[1].IsChecked = true; expiredSettings.UpdateLayout();
+        Check("Expired account restores sign-in action", SettingsTests.FindById<Button>(expiredSettings, "account.signin")!.IsVisible && !SettingsTests.FindById<Button>(expiredSettings, "account.analysis")!.IsVisible);
+        expiredSettings.Close();
+        await live.OpenBrowserAsync(login: true);
+        Check("Expired session still opens sign-in with its completion action", accountBrowser!.Url!.Contains("/onboarding/web") && SettingsTests.FindById<DockPanel>(accountBrowser.Window, "account.loginToolbar")!.IsVisible);
+        accountBrowser.Window.Close();
         live.RequestRefresh(true); await live.DisconnectAsync();
         var persisted = new StateStore(collectionRoot).LoadSnapshot();
         Check("Logout cancels in-flight work and persists empty state", persisted.Status == CollectionStatus.Disconnected && persisted.Today is null && persisted.Posts.Length == 0 && !live.Settings.PendingSessionClear);
+        await live.OpenBrowserAsync(login: true);
+        Check("First sign-in keeps the login completion action", accountBrowser!.Url!.Contains("/onboarding/web") && SettingsTests.FindById<DockPanel>(accountBrowser.Window, "account.loginToolbar")!.IsVisible && !live.Settings.Connected);
+        Capture(accountBrowser.Window, Path.Combine(output, "login-prompt-fixture.png"));
+        postAccount = "@fixture";
+        accountBrowser.VerifyRequested?.Invoke();
+        await WaitFor(() => live.State.PostsCurrent && !live.IsRunning);
+        Check("Login completion verifies data and closes the sign-in window", live.Settings.Connected && live.State.Status == CollectionStatus.Ready && live.State.PostsCurrent && !accountBrowser.Window.IsVisible);
+        await live.DisconnectAsync();
         live.UpdateSettings(live.Settings with { Connected = true }); live.RequestRefresh(true); live.Dispose(); await Task.Delay(1500);
         persisted = new StateStore(collectionRoot).LoadSnapshot(); Check("Exit during initialization never republishes late results", persisted.Status == CollectionStatus.Stopped && !persisted.IsCollecting && persisted.Posts.Length == 0);
     }

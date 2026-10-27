@@ -2,6 +2,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -33,7 +34,8 @@ internal static class SettingsTests
         using var updater = new AppUpdater(store, () => collector.Settings.Language, () => { }, () => { },
             new("LIMOD.XBar.Dev", "CN=XBar Development", "x64", new(0, 3, 0, 0), 26200), new UpdateClient(source, new Offline()));
         var startup = new Startup();
-        SettingsWindow Open() { var w = new SettingsWindow(collector, store, _ => Task.CompletedTask, updater, startup); w.Show(); w.UpdateLayout(); return w; }
+        var commands = new List<AppCommand>();
+        SettingsWindow Open() { var w = new SettingsWindow(collector, store, c => { commands.Add(c); return Task.CompletedTask; }, updater, startup); w.Show(); w.UpdateLayout(); return w; }
         var cancel = Open(); await Task.Delay(50);
         cancel.AutomaticControl!.IsChecked = false; cancel.StartupControl.IsChecked = true;
         Check("Settings choices stay staged before Save", updater.Preferences.AutomaticChecks && startup.Writes == 0);
@@ -53,6 +55,15 @@ internal static class SettingsTests
         startup.Pending.SetResult(); await Task.Delay(60);
         Check("Accepted startup save commits once then closes", !pending.IsVisible && updater.Preferences.AutomaticChecks && startup.State == StartupTaskState.Enabled && startup.Writes == 2);
         startup.Pending = null;
+        var signedOut = Open(); signedOut.Navigation[1].IsChecked = true; signedOut.UpdateLayout();
+        var signIn = FindById<Button>(signedOut, "account.signin")!;
+        signIn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Check("Signed-out account offers only sign-in and routes to login", signIn.IsVisible && !FindById<Button>(signedOut, "account.analysis")!.IsVisible && !FindById<Button>(signedOut, "account.signout")!.IsVisible && commands.Last().Action == "login");
+        collector.UpdateSettings(collector.Settings with { Connected = true }); signedOut.RefreshRegistration(); signedOut.UpdateLayout();
+        var analysis = FindById<Button>(signedOut, "account.analysis")!;
+        analysis.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Check("Signed-in account replaces login with analytics and sign-out", !signIn.IsVisible && analysis.IsVisible && FindById<Button>(signedOut, "account.signout")!.IsVisible && commands.Last().Action == "analysis");
+        signedOut.Close(); collector.UpdateSettings(collector.Settings with { Connected = false });
         Directory.CreateDirectory(output);
         foreach (var theme in new[] { "light", "dark" }) foreach (var language in new[] { "ko", "en", "ja" }) {
             collector.UpdateSettings(collector.Settings with { Language = language }); Theme.TestMode = theme; Theme.Apply();
@@ -72,6 +83,13 @@ internal static class SettingsTests
         var narrow = Open(); narrow.Width = narrow.MinWidth; narrow.Height = narrow.MinHeight; narrow.UpdateLayout();
         Check("Settings minimum window keeps all pages and Save accessible", narrow.Navigation.All(b => b.IsVisible) && narrow.SaveControl.TranslatePoint(new Point(0, narrow.SaveControl.ActualHeight), narrow).Y <= narrow.ActualHeight);
         narrow.Close(); Theme.TestMode = null; Theme.Apply();
+    }
+    internal static T? FindById<T>(DependencyObject root, string id) where T : DependencyObject
+    {
+        if (root is T value && AutomationProperties.GetAutomationId(root) == id) return value;
+        foreach (var child in LogicalTreeHelper.GetChildren(root).OfType<DependencyObject>())
+            if (FindById<T>(child, id) is { } match) return match;
+        return null;
     }
     private static double Contrast(Color a, Color b)
     {

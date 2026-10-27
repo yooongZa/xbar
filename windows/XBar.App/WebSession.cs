@@ -59,6 +59,7 @@ internal sealed class BrowserSurface : IDisposable
     internal TimeSpan OperationTimeout { get; set; } = TimeSpan.FromSeconds(8);
     private readonly System.Windows.Controls.TextBlock hint = new() { TextWrapping = TextWrapping.Wrap, Margin = new(12) };
     private readonly System.Windows.Controls.Button verify = new() { Margin = new(12), Padding = new(12, 6, 12, 6) };
+    private readonly System.Windows.Controls.DockPanel toolbar = new() { Margin = new(8), LastChildFill = true, Visibility = Visibility.Collapsed };
     public BrowserSurface(bool reader, string title)
     {
         Theme.Install(); this.reader = reader;
@@ -68,7 +69,7 @@ internal sealed class BrowserSurface : IDisposable
         var panel = new System.Windows.Controls.DockPanel();
         if (!reader)
         {
-            var toolbar = new System.Windows.Controls.DockPanel { Margin = new(8), LastChildFill = true };
+            System.Windows.Automation.AutomationProperties.SetAutomationId(toolbar, "account.loginToolbar");
             verify.Style = (Style)Application.Current.FindResource("XBar.Primary"); verify.MinWidth = 120;
             System.Windows.Controls.DockPanel.SetDock(verify, System.Windows.Controls.Dock.Right); toolbar.Children.Add(verify); toolbar.Children.Add(hint);
             System.Windows.Controls.DockPanel.SetDock(toolbar, System.Windows.Controls.Dock.Top); panel.Children.Add(toolbar);
@@ -81,7 +82,7 @@ internal sealed class BrowserSurface : IDisposable
     public void SetLanguage(string language, bool login)
     {
         hint.Text = L10n.T("verify.hint", language); verify.Content = L10n.T("verify", language);
-        hint.Visibility = verify.Visibility = login ? Visibility.Visible : Visibility.Collapsed;
+        toolbar.Visibility = login ? Visibility.Visible : Visibility.Collapsed;
     }
     public async Task InitializeAsync(CoreWebView2Environment env)
     {

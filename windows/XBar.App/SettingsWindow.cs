@@ -93,13 +93,16 @@ internal sealed class SettingsWindow : Window
         var topmost = Check(appearance, "topmost", collector.Settings.AlwaysOnTop); var effects = Check(appearance, "effects", collector.Settings.Effects); appearance.Children.Add(UI.Text(T("theme.note"), 11, "Muted"));
         var connection = Section(account, T("account")); var connectionStatus = UI.Text("", 13); connection.Children.Add(connectionStatus);
         var accountActions = new WrapPanel { Margin = new(0, 12, 0, 0) }; connection.Children.Add(accountActions);
-        var manage = UI.Button("", () => _ = execute(new("login")), "XBar.Primary"); manage.Margin = new(0, 0, 6, 0); accountActions.Children.Add(manage);
-        var analysis = UI.Button(T("analysis"), () => _ = execute(new("analysis"))); analysis.Margin = new(0, 0, 6, 0); accountActions.Children.Add(analysis);
+        var signIn = UI.Button(T("login"), () => _ = execute(new("login")), "XBar.Primary"); signIn.Margin = new(0, 0, 6, 0); accountActions.Children.Add(signIn);
+        var analysis = UI.Button(T("analysis"), () => _ = execute(new("analysis")), "XBar.Primary"); analysis.Margin = new(0, 0, 6, 0); accountActions.Children.Add(analysis);
         var disconnect = UI.Button(T("logout"), () => _ = execute(new("logout"))); accountActions.Children.Add(disconnect);
+        AutomationProperties.SetAutomationId(signIn, "account.signin"); AutomationProperties.SetAutomationId(analysis, "account.analysis"); AutomationProperties.SetAutomationId(disconnect, "account.signout");
         refreshAccount = () => {
             bool connected = collector.Settings.Connected && collector.State.Status != CollectionStatus.NeedsLogin;
             connectionStatus.Text = T(connected ? "connected" : "disconnected") + (connected && collector.State.Today is { } today ? " · " + today.Account : "");
-            manage.Content = T(connected ? "account.change" : "login"); UI.Label(manage, manage.Content.ToString()!); analysis.IsEnabled = disconnect.IsEnabled = collector.Settings.Connected;
+            signIn.Visibility = connected ? Visibility.Collapsed : Visibility.Visible;
+            analysis.Visibility = connected ? Visibility.Visible : Visibility.Collapsed;
+            disconnect.Visibility = collector.Settings.Connected ? Visibility.Visible : Visibility.Collapsed;
         };
         var collection = Section(account, T("collection"));
         var interval = UI.Choice(new[] { "5 " + T("minutes"), "10 " + T("minutes"), "30 " + T("minutes") }, Array.IndexOf(new[] { 5, 10, 30 }, collector.Settings.RefreshMinutes), T("interval")); Field(collection, T("interval"), interval);

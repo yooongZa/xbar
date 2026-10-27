@@ -111,10 +111,15 @@ internal sealed class DesktopWidget : Window
     public void KeepOnScreen() => MonitorAreas.KeepVisible(this);
     private void ShowMenu()
     {
+        var cm = BuildMenu(); cm.PlacementTarget = menu; cm.Placement = PlacementMode.Bottom; cm.IsOpen = true;
+    }
+    internal ContextMenu BuildMenu()
+    {
         var cm = new ContextMenu();
-        foreach (var item in new[] { ("settings", "settings"), ("update.title", "updates"), ("analysis", "analysis"), (collector.Settings.ShowPosts ? "collapse" : "expand", "toggle"), ("account.change", "login"), ("hide", "hide"), ("quit", "quit") })
+        bool connected = collector.Settings.Connected && collector.State.Status != CollectionStatus.NeedsLogin;
+        foreach (var item in new[] { ("settings", "settings"), ("update.title", "updates"), (connected ? "analysis" : "login", connected ? "analysis" : "login"), (collector.Settings.ShowPosts ? "collapse" : "expand", "toggle"), ("hide", "hide"), ("quit", "quit") })
         { var mi = new MenuItem { Header = L10n.T(item.Item1, collector.Settings.Language) }; mi.Click += async (_, _) => { if (item.Item2 == "hide") HideRequested?.Invoke(); else if (item.Item2 == "toggle") collector.UpdateSettings(collector.Settings with { ShowPosts = !collector.Settings.ShowPosts }); else await execute(new(item.Item2)); }; cm.Items.Add(mi); }
-        cm.PlacementTarget = menu; cm.Placement = PlacementMode.Bottom; cm.IsOpen = true;
+        return cm;
     }
     public void Refresh()
     {

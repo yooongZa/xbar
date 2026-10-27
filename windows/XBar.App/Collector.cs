@@ -195,6 +195,8 @@ internal sealed class Collector : IDisposable
             await web.ClearAsync(); overview = content = browser = null;
             Settings = Settings with { PendingSessionClear = false, Connected = false }; store.Write("settings.json", Settings);
         }
+        // A stale login command must not discard a working session or reopen sign-in.
+        login = login && (!Settings.Connected || State.Status == CollectionStatus.NeedsLogin);
         if (login) { Invalidate(true); Publish(); }
         if (browser?.Failed == true) { web.Release(browser); browser = null; }
         browser ??= await CreateSurfaceAsync(false, "X-Bar · X");
