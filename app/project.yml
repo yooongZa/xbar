@@ -5,8 +5,8 @@ options:
 settings:
   base:
     SWIFT_VERSION: '6.0'
-    MARKETING_VERSION: '0.5.3'
-    CURRENT_PROJECT_VERSION: '12'
+    MARKETING_VERSION: '0.5.4'
+    CURRENT_PROJECT_VERSION: '13'
     DEVELOPMENT_TEAM: 495S4FVMCB
     CODE_SIGN_STYLE: Manual
     CODE_SIGN_IDENTITY: '-'
@@ -44,6 +44,7 @@ targets:
         embed: true
       - sdk: SafariServices.framework
       - sdk: Network.framework
+      - sdk: ServiceManagement.framework
       - sdk: WebKit.framework
       - sdk: CryptoKit.framework
   SafariExtension:

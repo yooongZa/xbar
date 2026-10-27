@@ -13,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var setupWindow: NSWindow?
     private let safari = SafariConnection()
     private let updater = AppUpdater()
+    private let launchAtLogin = LaunchAtLogin()
     private var symbolTimer: Timer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -55,6 +56,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         updateStatus()
         updater.start()
+        launchAtLogin.start()
         if !UserDefaults.standard.bool(forKey: "setupCompleted") { showSetup() }
 
     }
@@ -120,9 +122,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     @objc private func togglePopover() {
         if popover.isShown { popover.performClose(nil); return }
         guard let button = statusItem.button else { return }
+        launchAtLogin.refresh()
         controller.content.markRead()
         popover.contentViewController = NSHostingController(rootView: MenuPopoverView(controller: controller,
-            content: controller.content, updater: updater, checkForUpdates: { [weak self] in self?.checkForUpdates() }, openPost: { [weak self] in self?.openPost($0) },
+            content: controller.content, updater: updater, launchAtLogin: launchAtLogin,
+            checkForUpdates: { [weak self] in self?.checkForUpdates() }, openPost: { [weak self] in self?.openPost($0) },
             openOverview: { [weak self] in self?.showWindow() },
             privacy: { [weak self] in self?.showPrivacy() },
             disconnect: { [weak self] in self?.disconnect() }, quit: { [weak self] in self?.quit() },
@@ -232,6 +236,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         return true
     }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
+    func applicationDidBecomeActive(_ notification: Notification) { launchAtLogin.refresh() }
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if !UserDefaults.standard.bool(forKey: "setupCompleted") { showSetup() } else { showWindow() }
         return true

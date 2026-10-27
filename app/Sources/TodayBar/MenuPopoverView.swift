@@ -6,6 +6,7 @@ struct MenuPopoverView: View {
     @ObservedObject var controller: BrowserController
     @ObservedObject var content: ContentMonitor
     @ObservedObject var updater: AppUpdater
+    @ObservedObject var launchAtLogin: LaunchAtLogin
     let checkForUpdates: () -> Void
     let openPost: (ContentPost) -> Void
     let openOverview: () -> Void
@@ -126,6 +127,27 @@ struct MenuPopoverView: View {
             Divider()
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        sectionLabel(L10n.text("앱 시작"))
+                        Toggle(L10n.text("Mac 로그인 시 자동 실행"), isOn: Binding(
+                            get: { launchAtLogin.enabled }, set: { launchAtLogin.setEnabled($0) }
+                        )).toggleStyle(.switch).controlSize(.small)
+                        Text(L10n.text("Mac에 로그인하면 메뉴바에서 시작합니다."))
+                            .font(.system(size: 10)).foregroundStyle(.secondary)
+                        if launchAtLogin.requiresApproval {
+                            Text(L10n.text("자동 실행하려면 시스템 설정에서 X-Bar를 허용해 주세요."))
+                                .font(.system(size: 10)).foregroundStyle(.secondary)
+                            Button(L10n.text("로그인 항목 설정 열기"), action: launchAtLogin.openSystemSettings)
+                        }
+                        if launchAtLogin.status == .notFound {
+                            Text(L10n.text("자동 실행 항목을 찾을 수 없습니다. 응용 프로그램에서 X-Bar를 다시 실행해 주세요."))
+                                .font(.system(size: 10)).foregroundStyle(.secondary)
+                        }
+                        if let error = launchAtLogin.errorDescription {
+                            Text(L10n.text("자동 실행 설정을 변경하지 못했습니다.") + " " + error)
+                                .font(.system(size: 10)).foregroundStyle(.secondary)
+                        }
+                    }
                     VStack(alignment: .leading, spacing: 9) {
                         sectionLabel(L10n.text("콘텐츠"))
                         Picker(L10n.text("정렬"), selection: $growth) {

@@ -10,6 +10,7 @@
 		01A59D8B55A47A5542084ADF /* SafariStatusProbe.m in Sources */ = {isa = PBXBuildFile; fileRef = 1067E7D101EFC72A395E193D /* SafariStatusProbe.m */; };
 		06F62A6142ECED2327E5E181 /* StatusSymbol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 537C4703E90A5D6A4120CB94 /* StatusSymbol.swift */; };
 		0B0F296C9BF455083D0D6EF8 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C98D0EB3E4287934BFEF83D /* main.swift */; };
+		0C778A45FB17E11060D2D257 /* LaunchAtLogin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 876D2FD0B3BBBB2601DA7CCD /* LaunchAtLogin.swift */; };
 		0CEDC21F19FB7CDB56FCE426 /* AppUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = C025F98412F5DE4853BAC510 /* AppUpdater.swift */; };
 		14441DD1B634EA2CA3AFFF7F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4CECBBD4F4956C0209312166 /* Assets.xcassets */; };
 		15854EA91690CE1225F7A4EE /* icon-32.png in Resources */ = {isa = PBXBuildFile; fileRef = 38D9C4E9FBAF92534745769F /* icon-32.png */; };
@@ -38,6 +39,7 @@
 		8F0C5D5CB4ED6A95FA2AA866 /* popup.css in Resources */ = {isa = PBXBuildFile; fileRef = DC6E64B6E5D2D0D991AD6B1F /* popup.css */; };
 		9603622AD6B89C9D8CC4DF92 /* SafariExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 116D4B1360108270807F4EFE /* SafariExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		9AA19D0F354572B573AA16F8 /* MetricRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EC1D3613592024D5977C268 /* MetricRecord.swift */; };
+		9E752F3160E1CCC379F66157 /* ServiceManagement.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A53F9C131320E59AE0A44C60 /* ServiceManagement.framework */; };
 		9F29BB6E322ABF1A1B24DD49 /* RefreshGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1EA9EE63CC535CB58B7FF9F /* RefreshGate.swift */; };
 		AC4F3BED75F9CD87D3324817 /* ContentExtractor.js in Resources */ = {isa = PBXBuildFile; fileRef = EA69F93AC523C326055B8DA7 /* ContentExtractor.js */; };
 		AFC6DC9692DF84E81B317103 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20A3C9D9A6EA5914458B80BB /* AppDelegate.swift */; };
@@ -103,6 +105,7 @@
 		75F35C2F4F02A1C26274A350 /* TodayBar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TodayBar.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		77523180280754B9F11F2B6F /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
 		80AEC38659F986796217CB7C /* Extractor.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = Extractor.js; sourceTree = "<group>"; };
+		876D2FD0B3BBBB2601DA7CCD /* LaunchAtLogin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLogin.swift; sourceTree = "<group>"; };
 		8876FA59FB97F58AE6F19AFD /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		8B26F7D13676653463509E9D /* SafariStatusProbe.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SafariStatusProbe.h; sourceTree = "<group>"; };
 		8C98D0EB3E4287934BFEF83D /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
@@ -111,6 +114,7 @@
 		A163B889457F0E7DAD835282 /* icon-128.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-128.png"; sourceTree = "<group>"; };
 		A1EA9EE63CC535CB58B7FF9F /* RefreshGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshGate.swift; sourceTree = "<group>"; };
 		A3938C04DFAE8263C06D943C /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/Localizable.strings; sourceTree = "<group>"; };
+		A53F9C131320E59AE0A44C60 /* ServiceManagement.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ServiceManagement.framework; path = System/Library/Frameworks/ServiceManagement.framework; sourceTree = SDKROOT; };
 		A5AE96C0DE88BD327E709291 /* SafariServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SafariServices.framework; path = System/Library/Frameworks/SafariServices.framework; sourceTree = SDKROOT; };
 		ADCFB1A1DF183741A68DF063 /* icon-16.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-16.png"; sourceTree = "<group>"; };
 		AE0BF024C874F4AE1E893973 /* MenuPopoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuPopoverView.swift; sourceTree = "<group>"; };
@@ -142,6 +146,7 @@
 				213C97961F1C3C17EB76D507 /* Sparkle in Frameworks */,
 				C93E009FFB5CED8D573D2EC0 /* SafariServices.framework in Frameworks */,
 				4A0DCA4CEB38B542B5B7CEFC /* Network.framework in Frameworks */,
+				9E752F3160E1CCC379F66157 /* ServiceManagement.framework in Frameworks */,
 				8F080C54656368009651EC1A /* WebKit.framework in Frameworks */,
 				8B617CD0BC99F449B5BCC86B /* CryptoKit.framework in Frameworks */,
 			);
@@ -206,6 +211,7 @@
 				27539CB90825E5E8D4A53DAF /* BrowserController.swift */,
 				38DB7B6EBB01DA18271195DC /* ContentMonitor.swift */,
 				CC254AEBA561017B990ACEDC /* DashboardView.swift */,
+				876D2FD0B3BBBB2601DA7CCD /* LaunchAtLogin.swift */,
 				8C98D0EB3E4287934BFEF83D /* main.swift */,
 				AE0BF024C874F4AE1E893973 /* MenuPopoverView.swift */,
 				3CD1C85F8A491ED37C67803C /* SafariConnection.swift */,
@@ -240,6 +246,7 @@
 				D73292439FE9CA9DE99FD33B /* CryptoKit.framework */,
 				74469B9F0E4054077155CC6D /* Network.framework */,
 				A5AE96C0DE88BD327E709291 /* SafariServices.framework */,
+				A53F9C131320E59AE0A44C60 /* ServiceManagement.framework */,
 				50277FA7F725CE3B1497F3C3 /* WebKit.framework */,
 			);
 			name = Frameworks;
@@ -406,6 +413,7 @@
 				4F39D75CFC7B281343128FC0 /* ContentMonitor.swift in Sources */,
 				4BE393C1F4936C973BDA2F1B /* DashboardView.swift in Sources */,
 				60995A2A332ACC218D5AD4CF /* L10n.swift in Sources */,
+				0C778A45FB17E11060D2D257 /* LaunchAtLogin.swift in Sources */,
 				8445FA3D62431D0A4F8DDE1A /* MenuPopoverView.swift in Sources */,
 				9AA19D0F354572B573AA16F8 /* MetricRecord.swift in Sources */,
 				241E75DC3E8A5421B8AB8BDD /* PostMetrics.swift in Sources */,
@@ -548,7 +556,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 12;
+				CURRENT_PROJECT_VERSION = 13;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 495S4FVMCB;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -569,7 +577,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.5.3;
+				MARKETING_VERSION = 0.5.4;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -636,7 +644,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 12;
+				CURRENT_PROJECT_VERSION = 13;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 495S4FVMCB;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -651,7 +659,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.5.3;
+				MARKETING_VERSION = 0.5.4;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

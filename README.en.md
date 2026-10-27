@@ -45,6 +45,10 @@ Today’s total is checked every 10 minutes by default; Settings offers 5, 10, o
 
 Starting with 0.5.2, use **Check for Updates** in Settings. X-Bar checks once a day unless you turn off automatic checks. Choosing **Install** continues through download, installation, and relaunch.
 
+### Launch at login
+
+Starting with 0.5.4, X-Bar registers to launch at login the first time you run it. Use Settings → Launch at login to turn it on or off. If macOS requires approval, choose Open Login Items Settings and allow X-Bar. Turning it off is remembered when you reopen the app.
+
 ## Privacy and help
 
 Account names, posts, and metrics are not sent to the developer’s servers. Sign-in sessions remain in the app’s local storage on this Mac. Safari connection transfers x.com sign-in cookies to the local app after your confirmation. Communication with X is subject to X’s privacy policy.
