@@ -2,6 +2,8 @@
 
 공개 베타 대상은 Windows 11 x64다. 두 위젯, 한국어·영어·일본어, 앱 내 업데이트를 제공한다. macOS 릴리스와 appcast는 독립적으로 유지한다. 현재 개발용 설치물은 일반 사용자 배포 대상이 아니다.
 
+최신 빌드·시험·남은 공개 조건은 [0.3.0 배포 준비 기록](RELEASE-READINESS-0.3.md)에 정리한다.
+
 ## 두 위젯의 배포 조건
 
 GitHub 직접 배포를 유지한다. 바탕화면 위젯 자체에는 Developer Mode(개발자 모드)가 필요하지 않다. Windows Widgets Board 공급자를 직접 설치하는 경로는 [Microsoft 공식 샘플의 배포 안내](https://learn.microsoft.com/en-us/samples/microsoft/windowsappsdk-samples/widgets/)상 개발자 모드를 요구한다. 공개 코드 서명만으로 이 조건이 해소된다고 가정하지 않는다. 설정의 추가 안내와 세 언어 릴리스 설명에 이 차이를 표시한다.
