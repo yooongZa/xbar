@@ -2,6 +2,12 @@
 
 공개 베타 대상은 Windows 11 x64다. 두 위젯, 한국어·영어·일본어, 앱 내 업데이트를 제공한다. macOS 릴리스와 appcast는 독립적으로 유지한다. 현재 개발용 설치물은 일반 사용자 배포 대상이 아니다.
 
+## 두 위젯의 배포 조건
+
+GitHub 직접 배포를 유지한다. 바탕화면 위젯 자체에는 Developer Mode(개발자 모드)가 필요하지 않다. Windows Widgets Board 공급자를 직접 설치하는 경로는 [Microsoft 공식 샘플의 배포 안내](https://learn.microsoft.com/en-us/samples/microsoft/windowsappsdk-samples/widgets/)상 개발자 모드를 요구한다. 공개 코드 서명만으로 이 조건이 해소된다고 가정하지 않는다. 설정의 추가 안내와 세 언어 릴리스 설명에 이 차이를 표시한다.
+
+기존 PC에서 임시 개발자 모드로 추가하고 복구한 뒤 카드가 유지된 결과는 새 PC의 일반 설치 증거를 대신하지 않는다. 새 환경에서 바탕화면 설치·업데이트를 개발자 모드 없이 검증하고, 보드 위젯은 사용자가 선택한 개발자 모드 조건에서 별도로 검증한다. 앱이 시스템 설정을 자동 변경하지 않는다.
+
 ## 재현 가능한 소스
 
 `windows/XBar.App`도 반드시 소스 아카이브에 포함한다. 상위 저장소의 macOS `*.app/` 제외 규칙을 `windows/.gitignore`에서 해제했다. 다섯 .NET 프로젝트의 `packages.lock.json`을 추적하며 빌드는 locked restore(잠금 복원)를 사용한다. SDK는 `windows/global.json`을 따른다.
@@ -35,7 +41,7 @@ UI 시험에는 Edge WebView2 Runtime이 필요하다. `-SkipUiTests`는 실기�
 
 - 검증한 소스 commit에서 빌드하고 source archive(소스 압축 파일)·설치 파일·SHA256SUMS·검증 기록을 준비한다.
 - `windows-v0.3.0-beta.1`처럼 Windows 전용 태그의 GitHub **draft prerelease(베타 출시 초안)**에 모은다. macOS의 Latest 릴리스는 유지한다.
-- 새 Windows 11 환경에서 별도 인증서 등록 없이 설치 → X 로그인 → 두 위젯 → 다음 버전 업데이트 → 자동 재시작을 확인한다.
+- 새 Windows 11 환경에서 별도 인증서 등록·개발자 모드 없이 설치 → X 로그인 → 바탕화면 위젯 → 다음 버전 업데이트 → 자동 재시작을 확인한다. 보드 위젯은 위 배포 조건에 따라 별도로 추가·복구를 확인한다.
 - 서명과 실기기 검증이 끝난 패키지만 공개한다. 공개 다운로드를 다시 받아 SHA-256을 확인한 뒤 Windows 업데이트 JSON을 게시한다. JSON이 먼저 새 파일을 가리키게 하지 않는다.
 - 게시 이후 파일을 교체하지 않는다. 수정은 더 높은 네 자리 MSIX 버전으로 배포한다.
 

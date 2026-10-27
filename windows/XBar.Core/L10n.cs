@@ -91,7 +91,7 @@ public static class L10n
         ["media"] = ["미디어 게시물", "Media post", "メディア投稿"],
         ["surge"] = ["재게시 급증", "Repost surge", "リポスト急増"],
         ["disabled"] = ["Windows 위젯 사용 중지", "Windows widget disabled", "Windowsウィジェットは無効です"],
-        ["pin"] = ["Win+W → 위젯 추가 → X-Bar를 선택하세요. 추가 전에는 바탕화면 위젯을 유지합니다.", "Press Win+W, add widgets, then select X-Bar. The desktop widget stays visible until added.", "Win+Wでウィジェットを追加し、X-Barを選択してください。追加するまでデスクトップウィジェットを表示します。"],
+        ["pin"] = ["GitHub 배포판의 Windows 위젯은 Windows 설정에서 개발자 모드를 켜야 추가할 수 있습니다. Win+W → 위젯 추가 → X-Bar를 선택하세요. 추가 전에는 바탕화면 위젯을 유지합니다. 바탕화면 위젯에는 개발자 모드가 필요하지 않습니다.", "The GitHub edition requires Developer Mode in Windows Settings to add its Windows widget. Press Win+W, add widgets, then select X-Bar. The desktop widget stays visible until added and does not require Developer Mode.", "GitHub配布版のWindowsウィジェットを追加するには、Windows設定で開発者モードを有効にする必要があります。Win+Wでウィジェットを追加し、X-Barを選択してください。追加するまでデスクトップウィジェットを表示します。デスクトップウィジェットには開発者モードは不要です。"],
         ["pinned"] = ["Windows 위젯 추가됨", "Windows widget added", "Windowsウィジェット追加済み"],
         ["pin.needed"] = ["Windows 위젯 추가 필요", "Add the Windows widget", "Windowsウィジェットの追加が必要です"],
         ["pin.unknown"] = ["Windows 위젯 등록 상태 확인 필요", "Widget registration needs checking", "ウィジェット登録の確認が必要です"],
