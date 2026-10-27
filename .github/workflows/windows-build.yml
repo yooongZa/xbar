@@ -1,0 +1,65 @@
+name: Windows source build
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload_artifact:
+        description: 'Upload unsigned proof only after confirming free artifact storage capacity'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-source-build-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    # Standard hosted runners are free for public repositories. Never run this job in a private fork.
+    if: ${{ github.repository == 'yooongZa/xbar' && !github.event.repository.private }}
+    runs-on: windows-2025
+    timeout-minutes: 25
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+      DOTNET_NOLOGO: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: windows/global.json
+          cache: false
+      - name: Build locked dependencies and test core
+        shell: pwsh
+        run: ./windows/scripts/build.ps1 -SkipUiTests
+      - name: Test layout and updater with isolated fixtures
+        shell: pwsh
+        run: |
+          $test = 'windows/XBar.WindowsTests/bin/Release/net10.0-windows10.0.19041.0/win-x64/XBar.WindowsTests.dll'
+          dotnet $test windows/artifacts/tests/layout-results.json --layout-only
+          if ($LASTEXITCODE -ne 0) { throw 'Layout tests failed' }
+          dotnet $test windows/artifacts/tests/updater-ui-results.json --updates-only
+          if ($LASTEXITCODE -ne 0) { throw 'Updater tests failed' }
+          python -m unittest discover -s windows/scripts -p 'test_*.py'
+          if ($LASTEXITCODE -ne 0) { throw 'Release tool tests failed' }
+      - name: Package unsigned development proof
+        shell: pwsh
+        run: ./windows/scripts/package.ps1
+      - name: Audit build origin and package
+        shell: pwsh
+        run: ./windows/scripts/audit-ci-package.ps1
+      - name: Upload unsigned build proof (optional)
+        if: ${{ inputs.upload_artifact }}
+        id: unsigned
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: windows-unsigned-${{ github.sha }}
+          path: |
+            windows/artifacts/XBar-*-x64.msix
+            windows/artifacts/ci-build-proof.json
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0

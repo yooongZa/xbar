@@ -21,7 +21,7 @@ internal static class Program
         var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         app.Startup += async (_, _) => {
             var output = Path.GetFullPath(args.FirstOrDefault() ?? "windows-results.json");
-            try { if (args.Contains("--lab-cookie-write") || args.Contains("--lab-cookie-read")) await LabCookieAsync(args.Contains("--lab-cookie-write")); else if (args.Contains("--updates-only")) await UpdaterTests.Run(Check); else if (args.Contains("--layout-only")) RunLayout(); else await RunAsync(Path.GetDirectoryName(output)!); }
+            try { if (args.Contains("--lab-cookie-write") || args.Contains("--lab-cookie-read")) await LabCookieAsync(args.Contains("--lab-cookie-write")); else if (args.Contains("--updates-only")) await UpdaterTests.Run(Check); else if (args.Contains("--layout-only")) RunLayout(Path.GetDirectoryName(output)!); else await RunAsync(Path.GetDirectoryName(output)!); }
             catch (Exception e) { Check("Harness completed", false, e.ToString()); }
             Directory.CreateDirectory(Path.GetDirectoryName(output)!); File.WriteAllText(output, JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true }));
             Console.WriteLine($"Windows integration: {results.Count - failures} passed, {failures} failed"); app.Shutdown(failures == 0 ? 0 : 1);
@@ -39,7 +39,7 @@ internal static class Program
         if (write) { var cookie = manager.CreateCookie("xbar_updater_fixture", "synthetic-session", ".x.com", "/"); cookie.Expires = DateTime.UtcNow.AddDays(1); manager.AddOrUpdateCookie(cookie); }
         Check("Isolated synthetic cookie survives " + (write ? "write" : "MSIX update"), (await manager.GetCookiesAsync("https://x.com")).Any(c => c.Name == "xbar_updater_fixture" && c.Value == "synthetic-session"));
     }
-    private static void RunLayout()
+    private static void RunLayout(string output)
     {
         using var collector = new Collector(new StateStore(Path.Combine(Path.GetTempPath(), "XBar-layout-" + Guid.NewGuid())));
         collector.UpdateSettings(collector.Settings with { ShowPosts = false });
@@ -50,6 +50,9 @@ internal static class Program
             collector.UpdateSettings(collector.Settings with { Connected = true }); widget.Refresh(); widget.UpdateLayout();
             Check($"{mode} compact connected returns to summary height", widget.Height == 210 && !widget.ConnectControl.IsVisible);
         }
+        // CI packaging preview: render this build's disconnected UI without WebView2 or an X account.
+        collector.UpdateSettings(collector.Settings with { Connected = false, Language = "en" }); widget.Refresh();
+        Directory.CreateDirectory(output); Capture(widget, Path.Combine(output, "widget-preview.png"));
         widget.Close(); Theme.TestMode = null;
     }
     private static void Capture(Window window, string fileName)
