@@ -202,7 +202,7 @@ internal sealed class Collector : IDisposable
         browser ??= await CreateSurfaceAsync(false, "X-Bar · X");
         browser.SetLanguage(Settings.Language, login);
         browser.VerifyRequested = () => _ = VerifyConnectionAsync();
-        browser.Window.Show(); browser.Window.Activate();
+        browser.Show();
         await browser.NavigateAsync(postId is not null ? "https://x.com/i/account_analytics/content/" + postId : login ? "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fi%2Faccount_analytics&mode=login" : Overview, CancellationToken.None);
     }
     public async Task DisconnectAsync()

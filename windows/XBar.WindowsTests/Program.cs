@@ -21,7 +21,7 @@ internal static class Program
         var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         app.Startup += async (_, _) => {
             var output = Path.GetFullPath(args.FirstOrDefault() ?? "windows-results.json");
-            try { if (args.Contains("--lab-cookie-write") || args.Contains("--lab-cookie-read")) await LabCookieAsync(args.Contains("--lab-cookie-write")); else if (args.Contains("--updates-only")) await UpdaterTests.Run(Check); else if (args.Contains("--settings-only")) await SettingsTests.Run(Check, Path.GetDirectoryName(output)!); else if (args.Contains("--layout-only")) RunLayout(Path.GetDirectoryName(output)!); else await RunAsync(Path.GetDirectoryName(output)!); }
+            try { if (args.Contains("--lab-cookie-write") || args.Contains("--lab-cookie-read")) await LabCookieAsync(args.Contains("--lab-cookie-write")); else if (args.Contains("--browser-only")) await BrowserVisibilityAsync(); else if (args.Contains("--updates-only")) await UpdaterTests.Run(Check); else if (args.Contains("--settings-only")) await SettingsTests.Run(Check, Path.GetDirectoryName(output)!); else if (args.Contains("--layout-only")) RunLayout(Path.GetDirectoryName(output)!); else await RunAsync(Path.GetDirectoryName(output)!); }
             catch (Exception e) { Check("Harness completed", false, e.ToString()); }
             Directory.CreateDirectory(Path.GetDirectoryName(output)!); File.WriteAllText(output, JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true }));
             Console.WriteLine($"Windows integration: {results.Count - failures} passed, {failures} failed"); app.Shutdown(failures == 0 ? 0 : 1);
@@ -30,6 +30,29 @@ internal static class Program
     }
     private static void Check(string name, bool passed, string? detail = null)
     { results.Add(new { name, passed, detail }); if (!passed) failures++; Console.WriteLine($"{(passed ? "PASS" : "FAIL")} {name}"); }
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool IsWindowVisible(IntPtr handle);
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool GetClientRect(IntPtr handle, out NativeRect rect);
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    private struct NativeRect { public int Left, Top, Right, Bottom; }
+    private static bool NativeWebHostVisible(BrowserSurface browser)
+    { return IsWindowVisible(browser.View.Handle) && GetClientRect(browser.View.Handle, out var bounds) && bounds.Right - bounds.Left > 800 && bounds.Bottom - bounds.Top > 500; }
+    private static async Task BrowserVisibilityAsync()
+    {
+        using var session = new WebSession(Path.Combine(Path.GetTempPath(), "XBar-browser-" + Guid.NewGuid()));
+        var browser = await session.CreateAsync(false, "X-Bar browser visibility fixture");
+        var core = browser.View.CoreWebView2;
+        core.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.All);
+        core.WebResourceRequested += (_, e) => e.Response = core.Environment.CreateWebResourceResponse(new MemoryStream(Encoding.UTF8.GetBytes("<!doctype html><title>Browser fixture</title><h1>Browser fixture</h1>")), 200, "OK", "Content-Type: text/html");
+        browser.SetLanguage("ko", false); browser.Show(); await browser.NavigateAsync("https://x.com/i/account_analytics", CancellationToken.None);
+        Check("Analytics native web host is visible on first show without resize", NativeWebHostVisible(browser) && !SettingsTests.FindById<DockPanel>(browser.Window, "account.loginToolbar")!.IsVisible);
+        browser.Window.Close(); browser.SetLanguage("ko", true); browser.Show();
+        Check("Sign-in native web host and completion action are visible", NativeWebHostVisible(browser) && SettingsTests.FindById<DockPanel>(browser.Window, "account.loginToolbar")!.IsVisible);
+        browser.Window.Close(); browser.SetLanguage("ko", false); browser.Show();
+        Check("Reopening analytics keeps web host visible and hides login toolbar", NativeWebHostVisible(browser) && !SettingsTests.FindById<DockPanel>(browser.Window, "account.loginToolbar")!.IsVisible);
+        browser.Window.Close();
+    }
     private static async Task LabCookieAsync(bool write)
     {
         // This helper accesses only the isolated updater lab profile, never a real account.

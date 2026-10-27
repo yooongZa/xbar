@@ -84,6 +84,12 @@ internal sealed class BrowserSurface : IDisposable
         hint.Text = L10n.T("verify.hint", language); verify.Content = L10n.T("verify", language);
         toolbar.Visibility = login ? Visibility.Visible : Visibility.Collapsed;
     }
+    public void Show()
+    {
+        Window.Show(); Window.Activate(); Window.UpdateLayout();
+        // Initialization happens while hidden; synchronize the native web host on every reopen.
+        View.UpdateWindowPos();
+    }
     public async Task InitializeAsync(CoreWebView2Environment env)
     {
         await View.EnsureCoreWebView2Async(env);
