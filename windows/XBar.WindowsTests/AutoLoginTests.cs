@@ -42,6 +42,12 @@ internal static class AutoLoginTests
             Check("Authentication dialog blocks automatic completion", await Read(Account + "<div role='dialog'><input></div>") is null);
             Check("Conflicting account identities block completion", await Read(Account + "<a aria-label='Profile' href='/different'>profile</a>") is null);
             Check("Loading page without an account never completes login", await Read("<div role='progressbar'></div>") is null);
+            Check("Transparent password placeholder allows independent session verification", (await Read(Account + "<input type='password' style='opacity:0'>", "/i/jf/onboarding/web")) is { RequiresSessionCheck: true });
+            Check("Password inside a transparent container is not an active challenge", (await Read(Account + "<div style='opacity:0'><input type='password'></div>", "/i/jf/onboarding/web")) is { RequiresSessionCheck: true });
+            Check("Zero-area password placeholder is not an active challenge", (await Read(Account + "<input type='password' style='width:0;height:0;padding:0;border:0'>", "/i/jf/onboarding/web")) is { RequiresSessionCheck: true });
+            Check("Focused transparent password field stays protected", await Read(Account + "<input id='password' type='password' style='opacity:0'><script>document.getElementById('password').focus()</script>", "/i/jf/onboarding/web") is null);
+            Check("Visible password challenge behind a known account stays open", await Read(Account + "<input type='password'>", "/i/jf/onboarding/web") is null);
+            Check("OTP with combined autocomplete tokens stays protected", await Read(Account + "<input autocomplete='one-time-code webauthn'>", "/i/jf/onboarding/web") is null);
             await Read(Account + "<input id='name' autocomplete='username webauthn'><script>document.getElementById('name').focus()</script>", "/i/jf/onboarding/web");
             Check("Autofocused untouched username field allows independent session verification", (await surface.ReadLoginIdentityAsync(CancellationToken.None)) is { RequiresSessionCheck: true });
             await surface.View.CoreWebView2.ExecuteScriptAsync("const target=document.getElementById('name');target.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}));target.blur();");
@@ -86,7 +92,7 @@ internal static class AutoLoginTests
         await collector.OpenBrowserAsync(); await Task.Delay(2300);
         Check("Ordinary analytics stays open after an automatic login", browser.UserVisible && !collector.IsWatchingLogin && !toolbar.IsVisible);
         browser.Window.Close(); await collector.DisconnectAsync();
-        page = Account + "<input id='name' autocomplete='username webauthn'><script>document.getElementById('name').focus()</script>"; probeAccount = "@different";
+        page = Account + "<input id='name' autocomplete='username webauthn'><input type='password' style='opacity:0'><script>document.getElementById('name').focus()</script>"; probeAccount = "@different";
         int mismatchProbes = probes;
         await collector.OpenBrowserAsync(login: true); await WaitFor(() => probes > mismatchProbes); await Task.Delay(1500);
         Check("Mismatched background session cannot complete login", !collector.Settings.Connected && browser!.UserVisible);

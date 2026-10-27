@@ -141,9 +141,21 @@ internal sealed class BrowserSurface : IDisposable
               const focused = document.activeElement;
               const frameEditing = focused instanceof HTMLIFrameElement;
               const editing = focused instanceof HTMLInputElement || focused instanceof HTMLTextAreaElement || focused?.isContentEditable || frameEditing;
-              const dialogInput = [...document.querySelectorAll('[role="dialog"] input')].some(el => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden');
-              const inputs = [...document.querySelectorAll('input')].filter(el => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden');
-              const challenge = inputs.some(el => el.type === 'password' || el.autocomplete.split(/\s+/).some(token => ['current-password','one-time-code'].includes(token)));
+              const rendered = el => {
+                const rect = el.getBoundingClientRect();
+                if (rect.width <= 0 || rect.height <= 0) return false;
+                for (let node = el; node instanceof HTMLElement; node = node.parentElement) {
+                  const style = getComputedStyle(node);
+                  if (style.display === 'none' || ['hidden','collapse'].includes(style.visibility) || Number(style.opacity) === 0) return false;
+                }
+                return true;
+              };
+              const inputs = [...document.querySelectorAll('input')].filter(rendered);
+              const dialogInput = inputs.some(el => el.closest('[role="dialog"]'));
+              const isChallenge = el => el.type === 'password' || el.autocomplete.split(/\s+/).some(token => ['current-password','one-time-code'].includes(token));
+              // X also renders a transparent password placeholder behind the username field.
+              // A focused challenge remains protected regardless of its styling.
+              const challenge = inputs.some(isChallenge) || focused instanceof HTMLInputElement && isChallenge(focused);
               const loginRoute = /^\/i\/flow\/(login|signup)/.test(location.pathname) || /^\/i\/jf\/onboarding\//.test(location.pathname);
               // X autofocuses an untouched username field over an already signed-in page.
               // Actual input, clicks and keys remain protected, even after the field loses focus.
