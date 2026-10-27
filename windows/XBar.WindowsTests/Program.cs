@@ -21,7 +21,7 @@ internal static class Program
         var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         app.Startup += async (_, _) => {
             var output = Path.GetFullPath(args.FirstOrDefault() ?? "windows-results.json");
-            try { if (args.Contains("--lab-cookie-write") || args.Contains("--lab-cookie-read")) await LabCookieAsync(args.Contains("--lab-cookie-write")); else if (args.Contains("--browser-only")) await BrowserVisibilityAsync(); else if (args.Contains("--updates-only")) await UpdaterTests.Run(Check); else if (args.Contains("--settings-only")) await SettingsTests.Run(Check, Path.GetDirectoryName(output)!); else if (args.Contains("--layout-only")) RunLayout(Path.GetDirectoryName(output)!); else await RunAsync(Path.GetDirectoryName(output)!); }
+            try { if (args.Contains("--lab-cookie-write") || args.Contains("--lab-cookie-read")) await LabCookieAsync(args.Contains("--lab-cookie-write")); else if (args.Contains("--login-only")) await AutoLoginTests.Run(Check); else if (args.Contains("--browser-only")) await BrowserVisibilityAsync(); else if (args.Contains("--updates-only")) await UpdaterTests.Run(Check); else if (args.Contains("--settings-only")) await SettingsTests.Run(Check, Path.GetDirectoryName(output)!); else if (args.Contains("--layout-only")) RunLayout(Path.GetDirectoryName(output)!); else await RunAsync(Path.GetDirectoryName(output)!); }
             catch (Exception e) { Check("Harness completed", false, e.ToString()); }
             Directory.CreateDirectory(Path.GetDirectoryName(output)!); File.WriteAllText(output, JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true }));
             Console.WriteLine($"Windows integration: {results.Count - failures} passed, {failures} failed"); app.Shutdown(failures == 0 ? 0 : 1);
@@ -48,7 +48,7 @@ internal static class Program
         browser.SetLanguage("ko", false); browser.Show(); await browser.NavigateAsync("https://x.com/i/account_analytics", CancellationToken.None);
         Check("Analytics native web host is visible on first show without resize", NativeWebHostVisible(browser) && !SettingsTests.FindById<DockPanel>(browser.Window, "account.loginToolbar")!.IsVisible);
         browser.Window.Close(); browser.SetLanguage("ko", true); browser.Show();
-        Check("Sign-in native web host and completion action are visible", NativeWebHostVisible(browser) && SettingsTests.FindById<DockPanel>(browser.Window, "account.loginToolbar")!.IsVisible);
+        Check("Sign-in native web host and automatic-close hint are visible", NativeWebHostVisible(browser) && SettingsTests.FindById<DockPanel>(browser.Window, "account.loginToolbar")!.IsVisible && !SettingsTests.FindById<DockPanel>(browser.Window, "account.loginToolbar")!.Children.OfType<Button>().Any());
         browser.Window.Close(); browser.SetLanguage("ko", false); browser.Show();
         Check("Reopening analytics keeps web host visible and hides login toolbar", NativeWebHostVisible(browser) && !SettingsTests.FindById<DockPanel>(browser.Window, "account.loginToolbar")!.IsVisible);
         browser.Window.Close();
@@ -258,18 +258,18 @@ internal static class Program
         Check("Expired account restores sign-in action", SettingsTests.FindById<Button>(expiredSettings, "account.signin")!.IsVisible && !SettingsTests.FindById<Button>(expiredSettings, "account.analysis")!.IsVisible);
         expiredSettings.Close();
         await live.OpenBrowserAsync(login: true);
-        Check("Expired session still opens sign-in with its completion action", accountBrowser!.Url!.Contains("/onboarding/web") && SettingsTests.FindById<DockPanel>(accountBrowser.Window, "account.loginToolbar")!.IsVisible);
+        Check("Expired session opens sign-in with automatic detection", accountBrowser!.Url!.Contains("/onboarding/web") && SettingsTests.FindById<DockPanel>(accountBrowser.Window, "account.loginToolbar")!.IsVisible && live.IsWatchingLogin);
         accountBrowser.Window.Close();
         live.RequestRefresh(true); await live.DisconnectAsync();
         var persisted = new StateStore(collectionRoot).LoadSnapshot();
         Check("Logout cancels in-flight work and persists empty state", persisted.Status == CollectionStatus.Disconnected && persisted.Today is null && persisted.Posts.Length == 0 && !live.Settings.PendingSessionClear);
         await live.OpenBrowserAsync(login: true);
-        Check("First sign-in keeps the login completion action", accountBrowser!.Url!.Contains("/onboarding/web") && SettingsTests.FindById<DockPanel>(accountBrowser.Window, "account.loginToolbar")!.IsVisible && !live.Settings.Connected);
+        Check("First sign-in waits automatically without a completion button", accountBrowser!.Url!.Contains("/onboarding/web") && SettingsTests.FindById<DockPanel>(accountBrowser.Window, "account.loginToolbar")!.IsVisible && !SettingsTests.FindById<DockPanel>(accountBrowser.Window, "account.loginToolbar")!.Children.OfType<Button>().Any() && !live.Settings.Connected);
         Capture(accountBrowser.Window, Path.Combine(output, "login-prompt-fixture.png"));
         postAccount = "@fixture";
-        accountBrowser.VerifyRequested?.Invoke();
+        await accountBrowser.NavigateAsync("https://x.com/home", CancellationToken.None);
         await WaitFor(() => live.State.PostsCurrent && !live.IsRunning);
-        Check("Login completion verifies data and closes the sign-in window", live.Settings.Connected && live.State.Status == CollectionStatus.Ready && live.State.PostsCurrent && !accountBrowser.Window.IsVisible);
+        Check("Login automatically closes the window and refreshes verified data", live.Settings.Connected && live.State.Status == CollectionStatus.Ready && live.State.PostsCurrent && !accountBrowser.Window.IsVisible);
         await live.DisconnectAsync();
         live.UpdateSettings(live.Settings with { Connected = true }); live.RequestRefresh(true); live.Dispose(); await Task.Delay(1500);
         persisted = new StateStore(collectionRoot).LoadSnapshot(); Check("Exit during initialization never republishes late results", persisted.Status == CollectionStatus.Stopped && !persisted.IsCollecting && persisted.Posts.Length == 0);

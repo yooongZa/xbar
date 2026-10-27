@@ -22,7 +22,11 @@ internal sealed class Collector : IDisposable
     private readonly Func<bool> networkAvailable;
     internal TimeSpan ScanDeadline { get; set; } = TimeSpan.FromSeconds(100);
     internal bool IsRunning => running is { IsCompleted: false };
-    private bool verifyingLogin;
+    private CancellationTokenSource? loginWatch;
+    private Task? browserOpening;
+    private (string? PostId, bool Login) openingRequest;
+    private long browserGeneration;
+    internal bool IsWatchingLogin => loginWatch is not null;
     private bool sleeping, disposed, disconnecting;
     private bool wasOnline;
     private string environmentKey = "";
@@ -82,7 +86,7 @@ internal sealed class Collector : IDisposable
     }
     public void RequestRefresh(bool manual)
     {
-        if (disposed || disconnecting || sleeping || !Settings.Connected) return;
+        if (disposed || disconnecting || sleeping || loginWatch is not null || !Settings.Connected) return;
         if (running is { IsCompleted: false })
         { if (scan?.IsCancellationRequested == true) { pendingRefresh = true; pendingManual |= manual; } return; }
         if (!networkAvailable()) { State = State with { Status = CollectionStatus.Offline }; Publish(); return; }
@@ -129,7 +133,6 @@ internal sealed class Collector : IDisposable
             { ledger.Reset(); State = State with { Posts = [], Surges = [], PostsAt = null, PostsScope = null }; collectPosts = true; }
             var now = DateTimeOffset.UtcNow;
             State = State with { Status = CollectionStatus.Ready, Today = new(reading.Display!, reading.DayKey!, reading.TimeZone!, reading.Account!, now), Detail = "" };
-            if (verifyingLogin) { verifyingLogin = false; browser?.Window.Hide(); }
             Publish();
             if (!collectPosts) { retry.Reset(); State = State with { PostsCurrent = previousPostsCurrent }; Publish(); return; }
             var range = DateRange.For(Settings.Period, now, TimeZoneInfo.Local); var period = Settings.Period;
@@ -187,55 +190,100 @@ internal sealed class Collector : IDisposable
         if (content is not null) web.Release(content);
         overview = content = null;
     }
-    public async Task OpenBrowserAsync(string? postId = null, bool login = false)
+    public Task OpenBrowserAsync(string? postId = null, bool login = false)
     {
-        if (disconnecting) return;
+        // Repeated clicks while the window initializes share the same opening operation.
+        if (browserOpening is { IsCompleted: false } pending) return openingRequest == (postId, login) ? pending : OpenAfterAsync(pending, postId, login);
+        openingRequest = (postId, login);
+        return browserOpening = OpenBrowserCoreAsync(postId, login);
+    }
+    private async Task OpenAfterAsync(Task pending, string? postId, bool login)
+    {
+        var generation = browserGeneration;
+        try { await pending; } catch { /* Each caller observes its own navigation error. */ }
+        if (generation != browserGeneration || disposed || disconnecting) return;
+        await OpenBrowserAsync(postId, login);
+    }
+    private async Task OpenBrowserCoreAsync(string? postId, bool login)
+    {
+        if (disposed || disconnecting) return;
+        var opening = ++browserGeneration;
+        if (login && loginWatch is not null && browser is { UserVisible: true, Failed: false }) { browser.Show(); return; }
+        CancelLoginWatch();
         if (Settings.PendingSessionClear)
         {
             await web.ClearAsync(); overview = content = browser = null;
+            if (opening != browserGeneration || disposed || disconnecting) return;
             Settings = Settings with { PendingSessionClear = false, Connected = false }; store.Write("settings.json", Settings);
         }
         // A stale login command must not discard a working session or reopen sign-in.
         login = login && (!Settings.Connected || State.Status == CollectionStatus.NeedsLogin);
-        if (login) { Invalidate(true); Publish(); }
+        if (login) { Invalidate(true); State = State with { Status = Settings.Connected ? CollectionStatus.NeedsLogin : CollectionStatus.Disconnected }; Publish(); }
         if (browser?.Failed == true) { web.Release(browser); browser = null; }
-        browser ??= await CreateSurfaceAsync(false, "X-Bar · X");
+        if (browser is null) {
+            var surface = await CreateSurfaceAsync(false, "X-Bar · X");
+            if (opening != browserGeneration || disposed || disconnecting) { web.Release(surface); return; }
+            browser = surface;
+            surface.Window.IsVisibleChanged += (_, _) => { if (!surface.UserVisible && ReferenceEquals(browser, surface)) CancelLoginWatch(); };
+        }
+        if (disposed || disconnecting) return;
         browser.SetLanguage(Settings.Language, login);
-        browser.VerifyRequested = () => _ = VerifyConnectionAsync();
         browser.Show();
+        if (login) { loginWatch = new(); _ = WatchLoginAsync(browser, loginWatch); }
         await browser.NavigateAsync(postId is not null ? "https://x.com/i/account_analytics/content/" + postId : login ? "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fi%2Faccount_analytics&mode=login" : Overview, CancellationToken.None);
     }
     public async Task DisconnectAsync()
     {
         if (disconnecting) return;
-        disconnecting = true; verifyingLogin = false; pendingRefresh = pendingManual = false; Invalidate(true); ledger.Reset();
+        disconnecting = true; browserGeneration++; CancelLoginWatch(); pendingRefresh = pendingManual = false; Invalidate(true); ledger.Reset();
         Settings = Settings with { Connected = false, PendingSessionClear = true }; store.Write("settings.json", Settings);
         State = new() { Settings = Settings, Status = CollectionStatus.Disconnected }; Publish();
         try { if (running is not null) await running; await web.ClearAsync(); overview = content = browser = null;
             Settings = Settings with { PendingSessionClear = false }; store.Write("settings.json", Settings); Publish(); }
         finally { disconnecting = false; }
     }
-    private async Task VerifyConnectionAsync()
+    private void CancelLoginWatch()
     {
-        if (verifyingLogin || disconnecting) return;
-        verifyingLogin = true;
+        var watch = loginWatch; loginWatch = null; watch?.Cancel();
+    }
+    private async Task WatchLoginAsync(BrowserSurface surface, CancellationTokenSource watch)
+    {
+        var cancellation = watch.Token; BrowserSurface.LoginIdentity? previous = null;
         try
         {
-            if (running is not null) await running;
-            if (!verifyingLogin || disconnecting) return;
-            Settings = Settings with { Connected = true }; store.Write("settings.json", Settings);
-            RequestRefresh(true);
-            if (running is not null) await running;
+            while (!cancellation.IsCancellationRequested && !disposed && !disconnecting && ReferenceEquals(loginWatch, watch) && surface.UserVisible)
+            {
+                await Task.Delay(1000, cancellation);
+                if (sleeping || !networkAvailable()) { previous = null; continue; }
+                try
+                {
+                    var current = await surface.ReadLoginIdentityAsync(cancellation);
+                    if (current is null || current != previous) { previous = current; continue; }
+                    if (running is { IsCompleted: false }) await running.WaitAsync(cancellation);
+                    // A navigation, account switch, close or logout invalidates the pending decision.
+                    current = await surface.ReadLoginIdentityAsync(cancellation);
+                    cancellation.ThrowIfCancellationRequested();
+                    if (current is null || current != previous || !ReferenceEquals(loginWatch, watch)) { previous = current; continue; }
+                    var connected = Settings with { Connected = true };
+                    store.Write("settings.json", connected); Settings = connected;
+                    loginWatch = null;
+                    State = State with { Status = CollectionStatus.Loading }; Publish();
+                    surface.SetLanguage(Settings.Language, false); surface.Window.Hide();
+                    RequestRefresh(true); return;
+                }
+                catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { throw; }
+                catch (Exception e) { previous = null; Failed?.Invoke(e); await Task.Delay(3000, cancellation); }
+            }
         }
-        catch (Exception e) { Failed?.Invoke(e); }
-        finally { verifyingLogin = false; }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
+        finally { if (ReferenceEquals(loginWatch, watch)) loginWatch = null; watch.Dispose(); }
     }
     private async Task<BrowserSurface> CreateSurfaceAsync(bool reader, string title)
     { var surface = await web.CreateAsync(reader, title); prepareSurface?.Invoke(surface); return surface; }
     public void Dispose()
     {
         if (disposed) return;
-        disposed = true; timer.Stop(); Invalidate(false);
+        disposed = true; browserGeneration++; CancelLoginWatch(); timer.Stop(); Invalidate(false);
         State = State with { Status = Settings.Connected ? CollectionStatus.Stopped : CollectionStatus.Disconnected, IsCollecting = false }; Publish();
         web.Dispose(); scan?.Dispose();
     }

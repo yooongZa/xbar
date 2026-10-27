@@ -52,13 +52,14 @@ internal sealed class BrowserSurface : IDisposable
     private readonly bool reader;
     private bool disposed;
     private string isolatedBootstrap = "";
-    public Action? VerifyRequested;
+    private long navigationRevision;
+    private ulong navigationId;
+    private bool navigating;
     public string? Url => View.CoreWebView2?.Source;
     public bool UserVisible => !reader && Window.IsVisible;
     public bool Failed { get; private set; }
     internal TimeSpan OperationTimeout { get; set; } = TimeSpan.FromSeconds(8);
     private readonly System.Windows.Controls.TextBlock hint = new() { TextWrapping = TextWrapping.Wrap, Margin = new(12) };
-    private readonly System.Windows.Controls.Button verify = new() { Margin = new(12), Padding = new(12, 6, 12, 6) };
     private readonly System.Windows.Controls.DockPanel toolbar = new() { Margin = new(8), LastChildFill = true, Visibility = Visibility.Collapsed };
     public BrowserSurface(bool reader, string title)
     {
@@ -70,10 +71,8 @@ internal sealed class BrowserSurface : IDisposable
         if (!reader)
         {
             System.Windows.Automation.AutomationProperties.SetAutomationId(toolbar, "account.loginToolbar");
-            verify.Style = (Style)Application.Current.FindResource("XBar.Primary"); verify.MinWidth = 120;
-            System.Windows.Controls.DockPanel.SetDock(verify, System.Windows.Controls.Dock.Right); toolbar.Children.Add(verify); toolbar.Children.Add(hint);
+            toolbar.Children.Add(hint);
             System.Windows.Controls.DockPanel.SetDock(toolbar, System.Windows.Controls.Dock.Top); panel.Children.Add(toolbar);
-            verify.Click += (_, _) => VerifyRequested?.Invoke();
             Window.Closing += (_, e) => { if (!disposed) { e.Cancel = true; Window.Hide(); } };
         }
         panel.Children.Add(View); Window.Content = panel;
@@ -81,7 +80,7 @@ internal sealed class BrowserSurface : IDisposable
     }
     public void SetLanguage(string language, bool login)
     {
-        hint.Text = L10n.T("verify.hint", language); verify.Content = L10n.T("verify", language);
+        hint.Text = L10n.T("login.hint", language);
         toolbar.Visibility = login ? Visibility.Visible : Visibility.Collapsed;
     }
     public void Show()
@@ -101,17 +100,40 @@ internal sealed class BrowserSurface : IDisposable
         core.Settings.IsPasswordAutosaveEnabled = false;
         core.Settings.IsGeneralAutofillEnabled = false;
         core.Settings.AreDefaultContextMenusEnabled = !reader;
-        core.NavigationStarting += (_, e) => { if (!NavigationPolicy.Allowed(e.Uri) && e.Uri != "about:blank") e.Cancel = true; };
+        core.NavigationStarting += (_, e) => {
+            if (!NavigationPolicy.Allowed(e.Uri) && e.Uri != "about:blank") { e.Cancel = true; return; }
+            navigationRevision++; navigationId = e.NavigationId; navigating = true;
+        };
+        core.SourceChanged += (_, _) => navigationRevision++;
+        core.NavigationCompleted += (_, e) => { if (e.NavigationId == navigationId) { navigating = false; navigationRevision++; } };
         core.NewWindowRequested += (_, e) => { e.Handled = true; if (!reader && NavigationPolicy.Allowed(e.Uri)) core.Navigate(e.Uri); };
         core.PermissionRequested += (_, e) => e.State = CoreWebView2PermissionState.Deny;
         core.DownloadStarting += (_, e) => e.Cancel = true;
-        if (reader)
         {
-            var names = new[] { ("PageContext", "XBarPageContext"), ("Extractor", "TodayBarExtractor"), ("ContentExtractor", "TodayBarContentExtractor") };
+            // The interactive window receives only read-only identity/authentication checks.
+            var names = reader ? new[] { ("PageContext", "XBarPageContext"), ("Extractor", "TodayBarExtractor"), ("ContentExtractor", "TodayBarContentExtractor") } : new[] { ("PageContext", "XBarPageContext") };
             isolatedBootstrap = string.Join("\n", names.Select(n => "if (!globalThis." + n.Item2 + ") {\n" + File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Scripts", n.Item1 + ".js")) + "\n}"));
             var script = isolatedBootstrap;
             await core.CallDevToolsProtocolMethodAsync("Page.addScriptToEvaluateOnNewDocument", JsonSerializer.Serialize(new { source = script, worldName = "XBar.Isolated" }));
         }
+    }
+    internal sealed record LoginIdentity(string Account, long Revision);
+    private sealed record LoginContext(string? Account, bool Ready);
+    internal async Task<LoginIdentity?> ReadLoginIdentityAsync(CancellationToken token)
+    {
+        if (!UserVisible || navigating || Failed) return null;
+        var revision = navigationRevision;
+        var result = await ReadAsync<LoginContext>("""
+            (() => {
+              const context = globalThis.XBarPageContext?.snapshot();
+              const focused = document.activeElement;
+              const editing = focused instanceof HTMLInputElement || focused instanceof HTMLTextAreaElement || focused?.isContentEditable;
+              const dialogInput = [...document.querySelectorAll('[role="dialog"] input')].some(el => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden');
+              return {account: context?.account, ready: !!context && !context.conflictingAccount && !context.authentication && !editing && !dialogInput};
+            })()
+            """, token);
+        return revision == navigationRevision && !navigating && UserVisible && result is { Ready: true } && MetricRecord.ValidAccount(result.Account)
+            ? new(result.Account!, revision) : null;
     }
     public async Task NavigateAsync(string url, CancellationToken token)
     {
