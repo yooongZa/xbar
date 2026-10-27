@@ -33,6 +33,7 @@ WebサイトからDMGをダウンロードし、X-Barをアプリケーション
 - [짧은 릴리즈 히스토리 / Release history](HISTORY.md)
 - [Update behavior & release preparation / 업데이트 동작·배포 절차](docs/UPDATES.md)
 - [Windows 11 widgets: source and beta preparation / Windows 소스·베타 준비](windows/README.md)
+- [Code signing policy / 코드 서명 정책](windows/CODE-SIGNING-POLICY.md) · [Windows privacy / 개인정보 안내](windows/PRIVACY.md)
 
 ## License / 라이선스 / ライセンス
 

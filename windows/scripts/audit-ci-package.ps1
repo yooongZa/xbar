@@ -17,7 +17,10 @@ function Read-Entry($archive,[string]$name){
     try{$stream.CopyTo($memory);return ,$memory.ToArray()}finally{$stream.Dispose();$memory.Dispose()}
 }
 try {
-    [xml]$manifest=[Text.Encoding]::UTF8.GetString((Read-Entry $zip 'AppxManifest.xml'))
+    $entry=$zip.GetEntry('AppxManifest.xml')
+    if(!$entry){throw 'Missing MSIX manifest'}
+    $reader=[IO.StreamReader]::new($entry.Open())
+    try{[xml]$manifest=$reader.ReadToEnd()}finally{$reader.Dispose()}
     $id=$manifest.Package.Identity
     if($id.Name -cne 'LIMOD.XBar.Dev' -or $id.Publisher -cne 'CN=XBar Development' -or $id.Version -ne "$version.0" -or $id.ProcessorArchitecture -ne 'x64'){throw 'Unexpected development package identity'}
     if($zip.GetEntry('AppxSignature.p7x')){throw 'CI proof must remain unsigned'}
@@ -45,7 +48,9 @@ foreach($kind in @('layout','updater-ui')){
 }
 $source=(git -C $root rev-parse HEAD).Trim()
 if($LASTEXITCODE -ne 0){throw 'Source commit unavailable'}
-$report=[ordered]@{schema=1;status='passed';sourceCommit=$source;runUrl=if($env:GITHUB_RUN_ID){"https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"}else{$null};sdk=(dotnet --version);package=[IO.Path]::GetFileName($packagePath);sha256=(Get-FileHash $packagePath).Hash.ToLowerInvariant();length=(Get-Item $packagePath).Length;unsigned=$true;publicRelease=$false;identity=[string]$id.Name;tests=$counts;ownBinaries=$metadata;fullWebViewAndCleanPcValidation=$false}
+Push-Location $root
+try{$sdk=(dotnet --version)}finally{Pop-Location}
+$report=[ordered]@{schema=1;status='passed';sourceCommit=$source;runUrl=if($env:GITHUB_RUN_ID){"https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"}else{$null};sdk=$sdk;package=[IO.Path]::GetFileName($packagePath);sha256=(Get-FileHash $packagePath).Hash.ToLowerInvariant();length=(Get-Item $packagePath).Length;unsigned=$true;publicRelease=$false;identity=[string]$id.Name;tests=$counts;ownBinaries=$metadata;fullWebViewAndCleanPcValidation=$false}
 $json=$report|ConvertTo-Json -Depth 6
 $json|Set-Content (Join-Path $root 'artifacts/ci-build-proof.json') -Encoding utf8
 Write-Output $json

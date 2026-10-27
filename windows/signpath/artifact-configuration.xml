@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Preparation only: validate in the approved SignPath account before use. -->
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <parameters>
+    <parameter name="version" required="true" />
+  </parameters>
+  <zip-file>
+    <msix-file path="XBar-${version}-x64.msix">
+      <pe-file-set product-name="X-Bar" company-name="LIMOD" file-version="${version}">
+        <include path="App/XBar.exe" />
+        <include path="App/XBar.dll" />
+        <include path="App/XBar.Core.dll" />
+        <include path="Provider/XBar.WidgetProvider.exe" />
+        <include path="Provider/XBar.WidgetProvider.dll" />
+        <include path="Provider/XBar.Core.dll" />
+        <for-each><authenticode-sign /></for-each>
+      </pe-file-set>
+      <authenticode-sign />
+    </msix-file>
+  </zip-file>
+</artifact-configuration>

@@ -81,3 +81,5 @@ WebView2 시험은 모든 요청에 시험 응답을 공급하며 실제 X 계�
 설정에서 수동 업데이트 확인과 하루 한 번 자동 확인을 제공한다. 새 버전 설치를 선택하면 서명·해시를 확인하고 같은 식별자/게시자의 MSIX로 교체한 뒤 앱을 재시작한다. 로그인과 설정은 보존한다. 자동 설치는 하지 않는다. Windows 공개 업데이트 목록과 정식 서명은 공개 배포 시 준비하며, 자세한 절차와 검증 경계는 [업데이트 안내](UPDATES.md)를 따른다. ARM64 실기기 검증은 별도 작업이다.
 
 업데이트 구현과 실기기 결과는 [0.3.0 검증 기록](VALIDATION-0.3.md), 기존 기능 확인 범위는 [Windows 구현 검증 기록](VALIDATION.md)에 기록한다. 공개 배포 준비는 [릴리스 안내](RELEASE.md)를 따른다.
+
+[Code signing policy / 코드 서명 정책](CODE-SIGNING-POLICY.md) · [Windows privacy / 개인정보·로그아웃·제거 안내](PRIVACY.md) · [무료 서명 연동 준비](signpath/README.md)
