@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <OutputType>WinExe</OutputType><UseWPF>true</UseWPF>
+    <AssemblyName>XBar</AssemblyName><ApplicationManifest>app.manifest</ApplicationManifest>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../XBar.Core/XBar.Core.csproj" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4314.35" />
+    <Content Include="../../app/Resources/PageContext.js;../../app/Resources/Extractor.js" Link="Scripts/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Scripts/ContentExtractor.js" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <PropertyGroup Condition="'$(UpdaterLab)' == 'true'"><DefineConstants>$(DefineConstants);XBAR_UPDATER_LAB</DefineConstants></PropertyGroup>
+  <ItemGroup Condition="'$(UpdaterLab)' == 'true'"><Content Include="../artifacts/updater-lab/UpdaterLab.json" Link="UpdaterLab.json" CopyToOutputDirectory="Always" /></ItemGroup>
+</Project>

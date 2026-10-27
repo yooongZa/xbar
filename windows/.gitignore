@@ -1,0 +1,9 @@
+bin/
+obj/
+!XBar.App/
+artifacts/
+TestResults/
+.vs/
+*.user
+*.pfx
+*.cer
