@@ -117,11 +117,11 @@ internal sealed class BrowserSurface : IDisposable
             await core.CallDevToolsProtocolMethodAsync("Page.addScriptToEvaluateOnNewDocument", JsonSerializer.Serialize(new { source = script, worldName = "XBar.Isolated" }));
         }
     }
-    internal sealed record LoginIdentity(string Account, long Revision);
-    private sealed record LoginContext(string? Account, bool Ready);
-    internal async Task<LoginIdentity?> ReadLoginIdentityAsync(CancellationToken token)
+    internal sealed record LoginIdentity(string Account, long Revision, bool RequiresSessionCheck);
+    private sealed record LoginContext(string? Account, bool Ready, bool RequiresSessionCheck);
+    internal async Task<LoginIdentity?> ReadLoginIdentityAsync(CancellationToken token, bool requireVisible = true)
     {
-        if (!UserVisible || navigating || Failed) return null;
+        if (requireVisible && !UserVisible || navigating || Failed) return null;
         var revision = navigationRevision;
         var result = await ReadAsync<LoginContext>("""
             (() => {
@@ -129,11 +129,13 @@ internal sealed class BrowserSurface : IDisposable
               const focused = document.activeElement;
               const editing = focused instanceof HTMLInputElement || focused instanceof HTMLTextAreaElement || focused?.isContentEditable;
               const dialogInput = [...document.querySelectorAll('[role="dialog"] input')].some(el => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden');
-              return {account: context?.account, ready: !!context && !context.conflictingAccount && !context.authentication && !editing && !dialogInput};
+              const existingSession = context?.authentication === 'login_session_detected';
+              return {account: context?.account, requiresSessionCheck: existingSession,
+                ready: !!context && !context.conflictingAccount && !editing && (existingSession || !context.authentication && !dialogInput)};
             })()
             """, token);
-        return revision == navigationRevision && !navigating && UserVisible && result is { Ready: true } && MetricRecord.ValidAccount(result.Account)
-            ? new(result.Account!, revision) : null;
+        return revision == navigationRevision && !navigating && (!requireVisible || UserVisible) && result is { Ready: true } && MetricRecord.ValidAccount(result.Account)
+            ? new(result.Account!, revision, result.RequiresSessionCheck) : null;
     }
     public async Task NavigateAsync(string url, CancellationToken token)
     {

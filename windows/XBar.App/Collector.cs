@@ -260,10 +260,12 @@ internal sealed class Collector : IDisposable
                     var current = await surface.ReadLoginIdentityAsync(cancellation);
                     if (current is null || current != previous) { previous = current; continue; }
                     if (running is { IsCompleted: false }) await running.WaitAsync(cancellation);
+                    if (!await ConfirmExistingSessionAsync(current.Account, cancellation))
+                    { previous = null; await Task.Delay(3000, cancellation); continue; }
                     // A navigation, account switch, close or logout invalidates the pending decision.
                     current = await surface.ReadLoginIdentityAsync(cancellation);
                     cancellation.ThrowIfCancellationRequested();
-                    if (current is null || current != previous || !ReferenceEquals(loginWatch, watch)) { previous = current; continue; }
+                    if (current is null || current != previous || !ReferenceEquals(loginWatch, watch) || sleeping || !networkAvailable()) { previous = current; continue; }
                     var connected = Settings with { Connected = true };
                     store.Write("settings.json", connected); Settings = connected;
                     loginWatch = null;
@@ -277,6 +279,24 @@ internal sealed class Collector : IDisposable
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
         finally { if (ReferenceEquals(loginWatch, watch)) loginWatch = null; watch.Dispose(); }
+    }
+    private async Task<bool> ConfirmExistingSessionAsync(string account, CancellationToken cancellation)
+    {
+        // X may place a login sheet over a valid session. Check it without navigating the user's form.
+        BrowserSurface? probe = null;
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellation); deadline.CancelAfter(TimeSpan.FromSeconds(15));
+        try
+        {
+            probe = await CreateSurfaceAsync(true, "X-Bar login session check"); deadline.Token.ThrowIfCancellationRequested();
+            await probe.NavigateAsync(Overview, deadline.Token);
+            for (int i = 0; i < 10; i++) {
+                await Task.Delay(500, deadline.Token);
+                var identity = await probe.ReadLoginIdentityAsync(deadline.Token, requireVisible: false);
+                if (identity is not null) return !identity.RequiresSessionCheck && string.Equals(identity.Account, account, StringComparison.OrdinalIgnoreCase);
+            }
+            return false;
+        }
+        finally { if (probe is not null) web.Release(probe); }
     }
     private async Task<BrowserSurface> CreateSurfaceAsync(bool reader, string title)
     { var surface = await web.CreateAsync(reader, title); prepareSurface?.Invoke(surface); return surface; }
