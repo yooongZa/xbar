@@ -113,6 +113,18 @@ internal sealed class BrowserSurface : IDisposable
             // The interactive window receives only read-only identity/authentication checks.
             var names = reader ? new[] { ("PageContext", "XBarPageContext"), ("Extractor", "TodayBarExtractor"), ("ContentExtractor", "TodayBarContentExtractor") } : new[] { ("PageContext", "XBarPageContext") };
             isolatedBootstrap = string.Join("\n", names.Select(n => "if (!globalThis." + n.Item2 + ") {\n" + File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Scripts", n.Item1 + ".js")) + "\n}"));
+            if (!reader) isolatedBootstrap += """
+
+                if (!globalThis.XBarLoginInteraction) {
+                  let started = false;
+                  const observe = event => {
+                    const el = event.target;
+                    if (el instanceof HTMLElement && el.closest('input, textarea, [contenteditable="true"], [role="dialog"]')) started = true;
+                  };
+                  for (const type of ['input', 'pointerdown', 'keydown', 'compositionstart']) document.addEventListener(type, observe, true);
+                  Object.defineProperty(globalThis, 'XBarLoginInteraction', {value:Object.freeze({started:()=>started}), configurable:false});
+                }
+                """;
             var script = isolatedBootstrap;
             await core.CallDevToolsProtocolMethodAsync("Page.addScriptToEvaluateOnNewDocument", JsonSerializer.Serialize(new { source = script, worldName = "XBar.Isolated" }));
         }
@@ -127,11 +139,17 @@ internal sealed class BrowserSurface : IDisposable
             (() => {
               const context = globalThis.XBarPageContext?.snapshot();
               const focused = document.activeElement;
-              const editing = focused instanceof HTMLInputElement || focused instanceof HTMLTextAreaElement || focused?.isContentEditable;
+              const frameEditing = focused instanceof HTMLIFrameElement;
+              const editing = focused instanceof HTMLInputElement || focused instanceof HTMLTextAreaElement || focused?.isContentEditable || frameEditing;
               const dialogInput = [...document.querySelectorAll('[role="dialog"] input')].some(el => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden');
-              const existingSession = context?.authentication === 'login_session_detected';
+              const inputs = [...document.querySelectorAll('input')].filter(el => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden');
+              const challenge = inputs.some(el => el.type === 'password' || el.autocomplete.split(/\s+/).some(token => ['current-password','one-time-code'].includes(token)));
+              const loginRoute = /^\/i\/flow\/(login|signup)/.test(location.pathname) || /^\/i\/jf\/onboarding\//.test(location.pathname);
+              // X autofocuses an untouched username field over an already signed-in page.
+              // Actual input, clicks and keys remain protected, even after the field loses focus.
+              const existingSession = loginRoute && !!context?.account && !challenge && !frameEditing && !globalThis.XBarLoginInteraction?.started();
               return {account: context?.account, requiresSessionCheck: existingSession,
-                ready: !!context && !context.conflictingAccount && !editing && (existingSession || !context.authentication && !dialogInput)};
+                ready: !!context && !context.conflictingAccount && (existingSession || !context.authentication && !editing && !dialogInput)};
             })()
             """, token);
         return revision == navigationRevision && !navigating && (!requireVisible || UserVisible) && result is { Ready: true } && MetricRecord.ValidAccount(result.Account)

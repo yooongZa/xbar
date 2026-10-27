@@ -42,6 +42,13 @@ internal static class AutoLoginTests
             Check("Authentication dialog blocks automatic completion", await Read(Account + "<div role='dialog'><input></div>") is null);
             Check("Conflicting account identities block completion", await Read(Account + "<a aria-label='Profile' href='/different'>profile</a>") is null);
             Check("Loading page without an account never completes login", await Read("<div role='progressbar'></div>") is null);
+            await Read(Account + "<input id='name' autocomplete='username webauthn'><script>document.getElementById('name').focus()</script>", "/i/jf/onboarding/web");
+            Check("Autofocused untouched username field allows independent session verification", (await surface.ReadLoginIdentityAsync(CancellationToken.None)) is { RequiresSessionCheck: true });
+            await surface.View.CoreWebView2.ExecuteScriptAsync("const target=document.getElementById('name');target.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}));target.blur();");
+            Check("User interaction with an untouched login field blocks automatic close after blur", await surface.ReadLoginIdentityAsync(CancellationToken.None) is null);
+            await Read(Account + "<iframe id='auth' tabindex='0' srcdoc='<input>'></iframe>");
+            await surface.View.CoreWebView2.ExecuteScriptAsync("document.getElementById('auth').focus();");
+            Check("Focused authentication frame blocks automatic completion", await surface.ReadLoginIdentityAsync(CancellationToken.None) is null);
             await Read(Account + "<input id='name'>", "/i/flow/login");
             await surface.View.CoreWebView2.ExecuteScriptAsync("const el=document.getElementById('name');el.focus();el.dispatchEvent(new Event('input',{bubbles:true}));el.blur();");
             Check("Started sign-in behind a known account stays protected after blur", await surface.ReadLoginIdentityAsync(CancellationToken.None) is null);
@@ -79,7 +86,7 @@ internal static class AutoLoginTests
         await collector.OpenBrowserAsync(); await Task.Delay(2300);
         Check("Ordinary analytics stays open after an automatic login", browser.UserVisible && !collector.IsWatchingLogin && !toolbar.IsVisible);
         browser.Window.Close(); await collector.DisconnectAsync();
-        page = Account + "<input id='name' autocomplete='username'>"; probeAccount = "@different";
+        page = Account + "<input id='name' autocomplete='username webauthn'><script>document.getElementById('name').focus()</script>"; probeAccount = "@different";
         int mismatchProbes = probes;
         await collector.OpenBrowserAsync(login: true); await WaitFor(() => probes > mismatchProbes); await Task.Delay(1500);
         Check("Mismatched background session cannot complete login", !collector.Settings.Connected && browser!.UserVisible);
