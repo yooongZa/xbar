@@ -33,7 +33,7 @@
 | 지연·실패 복구 | 읽기 8초·탐색 45초·전체 100초, 제한된 재시도, 실패 렌더러 재생성 |
 | 중복 갱신·늦은 결과 | 단일 수집, 마지막 기간 요청 처리, 취소 결과 거부, 종료 중 초기화 재진입 정리 |
 | 화면과 접근성 | 두 위젯, ko/en/ja, 시스템 색상, 키보드·포커스·스크롤, 확대 배치, 화면 밖 위치 복구 |
-| 로그인 시 시작 | 패키지 StartupTask의 상태를 읽고 사용자 선택으로 변경. 실제 OS 로그인 실행은 미시험 |
+| 로그인 시 시작 | 패키지 StartupTask의 상태를 읽고 사용자 선택으로 변경. 실제 Windows 로그아웃·재로그인 후 자동 표시와 X 세션 유지 확인. [후속 시험](VALIDATION-STARTUP.md) |
 | 공개 자동 업데이트 | Windows 배포 피드 미구성. 개발 MSIX의 로그인·설정 보존 업데이트만 확인 |
 
 WPF의 첫 하드웨어 렌더링 화면이 비거나 일부만 보이고 크기를 바꾸면 복구되는 현상을 설치본에서 발견했다. 작은 위젯·설정 창의 HwndTarget을 SoftwareOnly로 설정한다. WebView2는 별도 렌더러를 유지한다. 이는 해당 PC의 관찰을 근거로 한 호환성 조치이며 특정 GPU 드라이버가 원인이라고 단정하지 않는다. [Microsoft의 렌더링 모드 설명](https://learn.microsoft.com/en-us/dotnet/api/system.windows.media.renderoptions.processrendermode?view=windowsdesktop-10.0).
