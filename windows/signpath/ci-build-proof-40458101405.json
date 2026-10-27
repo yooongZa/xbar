@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "sourceCommit": "328d575e89e0ef01826781cf6897827606f9a200",
+  "runUrl": "https://github.com/yooongZa/xbar/actions/runs/40458101405",
+  "sdk": "10.0.114",
+  "package": "XBar-0.3.0.0-x64.msix",
+  "sha256": "e90486e692efde863504074f0d1606162bb990c77af32cb244a7c6eaab6e29fd",
+  "length": 166005903,
+  "unsigned": true,
+  "publicRelease": false,
+  "identity": "LIMOD.XBar.Dev",
+  "tests": {
+    "layout": 4,
+    "core": 74,
+    "updater-ui": 22
+  },
+  "ownBinaries": [
+    {
+      "fileVersion": "0.3.0.0",
+      "file": "App/XBar.exe",
+      "product": "X-Bar"
+    },
+    {
+      "fileVersion": "0.3.0.0",
+      "file": "App/XBar.dll",
+      "product": "X-Bar"
+    },
+    {
+      "fileVersion": "0.3.0.0",
+      "file": "App/XBar.Core.dll",
+      "product": "X-Bar"
+    },
+    {
+      "fileVersion": "0.3.0.0",
+      "file": "Provider/XBar.WidgetProvider.exe",
+      "product": "X-Bar"
+    },
+    {
+      "fileVersion": "0.3.0.0",
+      "file": "Provider/XBar.WidgetProvider.dll",
+      "product": "X-Bar"
+    },
+    {
+      "fileVersion": "0.3.0.0",
+      "file": "Provider/XBar.Core.dll",
+      "product": "X-Bar"
+    }
+  ],
+  "fullWebViewAndCleanPcValidation": false
+}
