@@ -1,19 +1,20 @@
 # Code signing policy
 
-X-Bar is maintained by [yooongZa](https://github.com/yooongZa). The maintainer reviews release changes and approves signing requests. External contributions require maintainer review. Release maintainers must use MFA on the source host and signing service; account configuration is checked before signing is enabled.
+X-Bar is maintained by [yooongZa](https://github.com/yooongZa). The maintainer reviews release changes and external contributions.
 
-## Current status
+## Windows desktop releases from 0.4
 
-Windows public code signing is **not yet available**. We are preparing an application to the SignPath Foundation free open-source program. No application approval, certificate access, or successful SignPath signature is claimed. Local development signatures and unsigned CI packages are test evidence and are not public installers.
+The Windows desktop EXE installer and X-Bar binaries are **not Authenticode-signed**. The owner chose unsigned GitHub distribution on 2026-10-27. Windows may display SmartScreen warnings or block execution according to device policy. X-Bar does not disable security features, install trust certificates, or change Developer Mode.
+
+The SignPath Foundation application was declined because the project had insufficient public adoption and independent visibility. The SignPath approval monitor is paused. No Foundation certificate, approval or signature is claimed.
 
 ## Release controls
 
-- Build from a recorded source commit using the checked-in dependency locks. The [Windows workflow](../.github/workflows/windows-build.yml) uses GitHub-hosted Windows runners.
-- Sign only X-Bar's own binaries and the containing MSIX. Preserve third-party binaries and their notices.
-- Match the MSIX publisher to the approved certificate subject. Verify the completed package's Windows trust, timestamp, identity, version and digest before publication.
-- Require the maintainer's manual approval for each signing request. Keep signing credentials in the service or repository secret store.
-- Publish the corresponding source and checksums. Publish the signed update listing only after checking the public package download.
+- Build the desktop app from a recorded commit with locked dependencies. Do not ship the legacy Widgets Board provider or updater-lab configuration.
+- Verify the Inno Setup compiler download against its pinned hash and trusted publisher. Preserve third-party binaries and license notices.
+- Check the resulting installer's product, company, version, length, SHA-256 and unsigned status. These checks do not constitute public Windows publisher verification.
+- Test installation, replacement, restart and local data preservation. Publish corresponding source and checksums with the GitHub Windows release.
+- Keep the update listing authenticated with the existing embedded Ed25519 public key. Validate package format, product/version and file hash before installation. This integrity check does not require a paid code-signing certificate and does not remove Windows reputation warnings.
+- Publish the update listing after checking the public installer download. Preserve macOS signing and its independent update channel.
 
-The proposed provider configuration is in [signpath](signpath/). Service-side approval and validation remain pending. If the Foundation accepts the application, we will add its required attribution and confirmed publisher details before distributing signed installers.
-
-See [Windows privacy](PRIVACY.md), [release procedure](RELEASE.md), and [SignPath conditions](https://signpath.org/terms).
+See [Windows privacy](PRIVACY.md), [release procedure](RELEASE.md), and the historical [SignPath preparation](signpath/).

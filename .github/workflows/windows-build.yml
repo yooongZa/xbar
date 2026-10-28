@@ -45,14 +45,15 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Updater tests failed' }
           dotnet $test windows/artifacts/tests/settings-results.json --settings-only
           if ($LASTEXITCODE -ne 0) { throw 'Settings tests failed' }
+          dotnet $test windows/artifacts/tests/desktop-results.json --desktop-only
+          if ($LASTEXITCODE -ne 0) { throw 'Desktop distribution tests failed' }
           python -m unittest discover -s windows/scripts -p 'test_*.py'
           if ($LASTEXITCODE -ne 0) { throw 'Release tool tests failed' }
-      - name: Package unsigned development proof
+      - name: Package unsigned desktop installer
         shell: pwsh
-        run: ./windows/scripts/package.ps1
-      - name: Audit build origin and package
-        shell: pwsh
-        run: ./windows/scripts/audit-ci-package.ps1
+        run: |
+          $compiler = ./windows/scripts/setup-inno.ps1
+          ./windows/scripts/package-desktop.ps1 -ISCC $compiler
       - name: Upload unsigned build proof (optional)
         if: ${{ inputs.upload_artifact }}
         id: unsigned
@@ -60,8 +61,8 @@ jobs:
         with:
           name: windows-unsigned-${{ github.sha }}
           path: |
-            windows/artifacts/XBar-*-x64.msix
-            windows/artifacts/ci-build-proof.json
+            windows/artifacts/XBar-*-windows-x64-setup.exe
+            windows/artifacts/XBar-*-windows-x64-setup.exe.verification.json
           if-no-files-found: error
           retention-days: 1
           compression-level: 0

@@ -7,14 +7,15 @@ namespace XBar.Core;
 
 public sealed record AppCommand(string Action, string? Argument = null)
 {
-    public bool IsValid => Action is "activate" or "settings" or "updates" or "login" or "refresh" ||
+    public bool IsValid => Action is "quit" or "activate" or "settings" or "updates" or "login" or "refresh" ||
         Action == "period" && Enum.TryParse<ContentPeriod>(Argument, out var p) && Enum.IsDefined(p) ||
         Action == "post" && Argument is not null && Regex.IsMatch(Argument, @"\A[0-9]{10,25}\z");
     public static AppCommand Parse(string[] args)
     {
         var url = args.FirstOrDefault(a => a.StartsWith("xbar:", StringComparison.OrdinalIgnoreCase));
         if (url is not null && Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Scheme == "xbar" && u.UserInfo == "" && u.Query == "" && u.Fragment == "")
-        { var cmd = new AppCommand(u.Host, u.AbsolutePath.Trim('/')); if (cmd.IsValid) return cmd; }
+        { var cmd = new AppCommand(u.Host, u.AbsolutePath.Trim('/')); if (cmd.IsValid && cmd.Action != "quit") return cmd; }
+        if (args.Contains("--quit")) return new("quit");
         if (args.Contains("--background")) return new("background");
         return new("activate");
     }

@@ -29,4 +29,16 @@ class PublicReleaseReportTests(unittest.TestCase):
             path.write_text('[]')
             with self.assertRaises(SystemExit): prepare.verify_report(path,identity,digest,123)
 
+class DesktopReleaseReportTests(unittest.TestCase):
+    def test_unsigned_report_binds_product_and_file(self):
+        good={'schema':1,'status':'passed','format':'exe','identity':'LIMOD.XBar.Desktop','publisher':'LIMOD','version':'0.4.1.0','architecture':'x64','sha256':'b'*64,'length':234,'codeSigned':False}
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'verification.json'
+            path.write_text(json.dumps(good))
+            self.assertEqual(prepare.verify_desktop_report(path,'0.4.1.0','b'*64,234)['Name'],'LIMOD.XBar.Desktop')
+            for k in good:
+                with self.subTest(field=k):
+                    path.write_text(json.dumps(good|{k:'wrong'}))
+                    with self.assertRaises(SystemExit): prepare.verify_desktop_report(path,'0.4.1.0','b'*64,234)
+
 if __name__=='__main__': unittest.main()

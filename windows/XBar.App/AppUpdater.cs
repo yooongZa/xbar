@@ -32,7 +32,6 @@ internal sealed class AppUpdater : IDisposable
     internal static UpdateSource Source()
     {
 #if XBAR_UPDATER_LAB
-        if (Windows.ApplicationModel.Package.Current.Id.Name != "LIMOD.XBar.UpdaterLab") throw new InvalidOperationException("Lab identity required");
         var config = JsonSerializer.Deserialize<LabSource>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "UpdaterLab.json")), StateStore.Json)!;
         return new(new Uri(config.Url), config.PublicKey, true);
 #else
@@ -44,7 +43,7 @@ internal sealed class AppUpdater : IDisposable
         UpdateIdentity? identity = null, UpdateClient? client = null, IUpdateInstaller? installer = null)
     {
         this.store = store; this.language = language; this.prepareInstall = prepareInstall; this.resume = resume;
-        Identity = identity ?? WindowsUpdateInstaller.Identity(); this.client = client ?? new UpdateClient(Source()); this.installer = installer ?? new WindowsUpdateInstaller();
+        Identity = identity ?? DesktopUpdateInstaller.Identity(); this.client = client ?? new UpdateClient(Source()); this.installer = installer ?? (Identity.Format == "exe" ? new DesktopUpdateInstaller() : new WindowsUpdateInstaller());
         Preferences = store.Read<UpdatePreferences>("updates.json") ?? new();
         if (store.Read<UpdateReceipt>("update-install.json") is { } receipt)
         {
@@ -107,7 +106,7 @@ internal sealed class AppUpdater : IDisposable
         if (disposed || busy || Available is not { } candidate) return;
         if (!consent.Choose(session)) return;
         busy = true; operation?.Dispose(); operation = new(); var token = operation.Token;
-        var directory = Path.Combine(store.Root, "Updates", Guid.NewGuid().ToString("N")); var file = Path.Combine(directory, "update.msix");
+        var directory = Path.Combine(store.Root, "Updates", Guid.NewGuid().ToString("N")); var file = Path.Combine(directory, candidate.Package.Format == "exe" ? "update.exe" : "update.msix");
         bool prepared = false, submitted = false;
         Phase = UpdatePhase.Downloading; Progress = 0; Notify();
         try

@@ -17,8 +17,8 @@ public sealed record UpdatePreferences
     public string? SkippedVersion { get; init; }
     public bool Due(DateTimeOffset now) => AutomaticChecks && (LastCheck is null || now - LastCheck >= TimeSpan.FromDays(1) || LastCheck - now > TimeSpan.FromDays(1));
 }
-public sealed record UpdateIdentity(string Name, string Publisher, string Architecture, Version Version, int OsBuild);
-public sealed record UpdatePackage(string Identity, string Publisher, string Architecture, string Url, long Length, string Sha256);
+public sealed record UpdateIdentity(string Name, string Publisher, string Architecture, Version Version, int OsBuild, string Format = "msix");
+public sealed record UpdatePackage(string Identity, string Publisher, string Architecture, string Url, long Length, string Sha256, string Format = "msix");
 public sealed record UpdateRelease(int Schema, string Platform, string Version, string DisplayVersion, int MinimumOsBuild,
     DateTimeOffset PublishedAt, ImmutableDictionary<string, string> Notes, UpdatePackage[] Packages);
 public sealed record UpdateEnvelope(string Payload, string Signature);
@@ -73,10 +73,11 @@ public static class UpdateValidation
         var release = JsonSerializer.Deserialize<UpdateRelease>(payload, StateStore.Json) ?? throw new InvalidDataException("Missing release");
         var version = ParseVersion(release.Version);
         if (release.Schema != 1 || release.Platform != "windows" || release.DisplayVersion is not { Length: > 0 and <= 32 } || release.MinimumOsBuild < 22000 || release.PublishedAt > now.AddMinutes(5) || release.Notes is null || release.Notes.Count > 3 || release.Notes.Any(x => x.Key is not ("ko" or "en" or "ja") || x.Value is null || x.Value.Length > 6000) || release.Packages is not { Length: > 0 and <= 4 }) throw new InvalidDataException("Invalid release metadata");
-        var compatible = release.Packages.Where(p => p is not null && p.Identity == installed.Name && p.Publisher == installed.Publisher && p.Architecture == installed.Architecture).ToArray();
+        var compatible = release.Packages.Where(p => p is not null && p.Identity == installed.Name && p.Publisher == installed.Publisher && p.Architecture == installed.Architecture && p.Format == installed.Format).ToArray();
         if (compatible.Length > 1) throw new InvalidDataException("Ambiguous update package");
         if (compatible.Length == 0 || version <= installed.Version || release.MinimumOsBuild > installed.OsBuild) return null;
         var package = compatible[0];
+        if (package.Format is not ("msix" or "exe")) throw new InvalidDataException("Unknown package format");
         if (package.Length is <= 0 or > MaximumPackageBytes || package.Sha256 is null || !Regex.IsMatch(package.Sha256, @"\A[0-9a-fA-F]{64}\z") || !Uri.TryCreate(package.Url, UriKind.Absolute, out var uri) || !source.Allowed(uri, true)) throw new InvalidDataException("Invalid package metadata");
         return new(release, package);
     }
@@ -86,6 +87,17 @@ public static class UpdateValidation
         if (stream.Length != update.Package.Length) throw new InvalidDataException("Package length mismatch");
         var hash = await SHA256.HashDataAsync(stream, token);
         if (!CryptographicOperations.FixedTimeEquals(hash, Convert.FromHexString(update.Package.Sha256))) throw new CryptographicException("Package hash mismatch");
+        if (update.Package.Format == "exe") {
+            if (update.Package.Identity is not ("LIMOD.XBar.Desktop" or "LIMOD.XBar.Desktop.UpdaterLab") || update.Package.Publisher != "LIMOD" || update.Package.Architecture != "x64") throw new InvalidDataException("Unexpected desktop installer");
+            stream.Position = 0;
+            using var pe = new System.Reflection.PortableExecutable.PEReader(stream, System.Reflection.PortableExecutable.PEStreamOptions.LeaveOpen);
+            if (pe.PEHeaders.PEHeader is null) throw new InvalidDataException("Missing executable header");
+            var info = System.Diagnostics.FileVersionInfo.GetVersionInfo(path);
+            var version = new Version(info.FileMajorPart, info.FileMinorPart, info.FileBuildPart, info.FilePrivatePart);
+            if (version != ParseVersion(update.Release.Version) || info.ProductName?.Trim() != "X-Bar" || info.CompanyName?.Trim() != "LIMOD") throw new InvalidDataException("Installer identity or version mismatch");
+            token.ThrowIfCancellationRequested(); return;
+        }
+        if (update.Package.Format != "msix") throw new InvalidDataException("Unknown package format");
         stream.Position = 0;
         using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
         if (archive.Entries.Count(e => e.FullName == "AppxManifest.xml") != 1 || archive.GetEntry("AppxSignature.p7x") is null) throw new InvalidDataException("Signed MSIX required");

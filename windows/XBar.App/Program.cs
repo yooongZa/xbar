@@ -17,7 +17,6 @@ internal sealed class Program : Application
     private readonly StateStore store = new(StateStore.DefaultRoot);
     private readonly DispatcherTimer registrationTimer = new() { Interval = TimeSpan.FromSeconds(10) };
     private bool desktopHidden;
-    private bool probing;
     private bool closing;
     [STAThread] public static void Main(string[] args)
     {
@@ -25,15 +24,9 @@ internal sealed class Program : Application
         AppContext.SetData("XBar.UpdaterLab", true);
 #endif
         var command = AppCommand.Parse(args);
-        try
-        {
-            var activation = global::Windows.ApplicationModel.AppInstance.GetActivatedEventArgs();
-            if (activation is global::Windows.ApplicationModel.Activation.ProtocolActivatedEventArgs protocol) command = AppCommand.Parse([protocol.Uri.ToString()]);
-            else if (activation?.Kind == global::Windows.ApplicationModel.Activation.ActivationKind.StartupTask) command = new("background");
-        }
-        catch (System.Runtime.InteropServices.COMException) { /* Unpackaged development launch. */ }
         using var mutex = new Mutex(true, "Global\\" + CommandPipe.Name, out bool first);
         if (!first) { if (command.Action != "background") CommandPipe.SendAsync(command).GetAwaiter().GetResult(); return; }
+        if (command.Action == "quit") return;
         var app = new Program { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         app.Startup += (_, _) => app.Start(command);
         app.Run();
@@ -44,14 +37,14 @@ internal sealed class Program : Application
         collector = new(store); collector.Failed += Log;
         desktop = new(collector, ExecuteAsync);
         desktop.HideRequested += () => { desktopHidden = true; desktop.Hide(); };
-        collector.Changed += () => { desktop.Refresh(); settings?.RefreshRegistration(); ApplyMode(); };
+        collector.Changed += () => { if (closing) return; desktop.Refresh(); settings?.RefreshRegistration(); ApplyMode(); };
         try {
             updater = new(store, () => collector.Settings.Language,
                 () => { registrationTimer.Stop(); collector.SleepChanged(true); desktop.AllowClose = true; },
                 () => { desktop.AllowClose = false; registrationTimer.Start(); collector.SleepChanged(false); });
             updater.Changed += () => settings?.RefreshUpdate(); updater.Start();
         } catch (System.Runtime.InteropServices.COMException e) { Log(e); }
-        Exit += (_, _) => { updater?.Dispose(); if (!closing) collector.Dispose(); };
+        Exit += (_, _) => StopRuntime();
         registrationTimer.Tick += async (_, _) => await ProbeAsync(); registrationTimer.Start();
         SystemEvents.PowerModeChanged += PowerChanged;
         SystemEvents.DisplaySettingsChanged += DisplayChanged;
@@ -69,36 +62,9 @@ internal sealed class Program : Application
     private void ApplyMode()
     {
         if (closing) return;
-        var registration = store.Read<WidgetRegistration>("registration.json");
-        // Keep a usable surface while board registration is unknown or incomplete.
-        bool needsDesktop = collector.Settings.Mode != DisplayMode.Windows || registration is not { Count: > 0, Error: null } || DateTimeOffset.UtcNow - registration.CheckedAt > TimeSpan.FromMinutes(2);
-        if (needsDesktop && !desktopHidden) { if (!desktop.IsVisible) desktop.Show(); } else desktop.Hide();
+        if (!desktopHidden) { if (!desktop.IsVisible) desktop.Show(); } else desktop.Hide();
     }
-    private async Task ProbeAsync()
-    {
-#if XBAR_UPDATER_LAB
-        await Task.CompletedTask; return;
-#else
-        if (probing || closing || collector.Settings.Mode == DisplayMode.Desktop && settings is null) return;
-        probing = true;
-        try
-        {
-            var exe = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "Provider", "XBar.WidgetProvider.exe"));
-            if (File.Exists(exe))
-            {
-                using var p = Process.Start(new ProcessStartInfo(exe) { UseShellExecute = false, CreateNoWindow = true, ArgumentList = { "--probe" } });
-                if (p is not null)
-                {
-                    try { await p.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(8)); }
-                    catch (TimeoutException) { if (!p.HasExited) p.Kill(); throw; }
-                }
-            }
-            settings?.RefreshRegistration(); ApplyMode();
-        }
-        catch (Exception e) { Log(e); }
-        finally { probing = false; }
-#endif
-    }
+    private Task ProbeAsync() { settings?.RefreshRegistration(); return Task.CompletedTask; }
     private async Task ExecuteAsync(AppCommand command)
     {
         if (closing) return;
@@ -126,12 +92,19 @@ internal sealed class Program : Application
         settings.Show(); settings.Activate();
         _ = ProbeAsync();
     }
-    private void Quit()
+    private void StopRuntime()
     {
+        // Restart Manager can close WPF windows before Exit. Disposing the collector
+        // publishes its final state, which must never try to show those windows again.
         if (closing) return; closing = true;
         registrationTimer.Stop(); lifetime.Cancel();
         SystemEvents.PowerModeChanged -= PowerChanged; SystemEvents.DisplaySettingsChanged -= DisplayChanged; SystemEvents.TimeChanged -= TimeChanged;
-        updater?.Dispose(); collector.Dispose(); desktop.AllowClose = true; desktop.Close(); settings?.Close(); Shutdown();
+        updater?.Dispose(); collector.Dispose();
+    }
+    private void Quit()
+    {
+        if (closing) return;
+        StopRuntime(); desktop.AllowClose = true; desktop.Close(); settings?.Close(); Shutdown();
     }
     private static void Log(Exception e)
     {

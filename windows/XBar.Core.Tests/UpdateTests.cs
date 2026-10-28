@@ -31,6 +31,15 @@ public sealed class UpdateTests : IDisposable
         var payload = JsonSerializer.SerializeToUtf8Bytes(release, StateStore.Json);
         return JsonSerializer.SerializeToUtf8Bytes(new UpdateEnvelope(Convert.ToBase64String(payload), Convert.ToBase64String(SignatureAlgorithm.Ed25519.Sign(key, payload))), StateStore.Json);
     }
+    [Fact] public void DesktopFeedCannotCrossPackageFormats()
+    {
+        var r = Release(Package()); var p = r.Packages[0] with { Identity = "LIMOD.XBar.Desktop", Publisher = "LIMOD", Format = "exe" };
+        r = r with { Packages = [p] };
+        var installed = Installed with { Name = p.Identity, Publisher = p.Publisher, Format = "exe" };
+        Assert.NotNull(UpdateValidation.Read(Sign(r), Source, installed, now));
+        Assert.Null(UpdateValidation.Read(Sign(r), Source, installed with { Format = "msix" }, now));
+        Assert.Null(UpdateValidation.Read(Sign(r with { Packages = [p with { Format = "msix" }] }), Source, installed, now));
+    }
     [Fact] public void SignedFeedSelectsNewCompatibleVersion()
     {
         var update = UpdateValidation.Read(Sign(Release(Package())), Source, Installed, now);

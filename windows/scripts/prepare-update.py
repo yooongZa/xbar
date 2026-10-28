@@ -28,6 +28,15 @@ def verify_report(path, identity, digest, length):
         raise SystemExit('Windows release verification is missing, failed, or belongs to another package.')
 
 
+def verify_desktop_report(path, version, digest, length):
+    proof = json.loads(path.read_text(encoding='utf-8-sig'))
+    expected = {'schema': 1, 'status': 'passed', 'format': 'exe', 'publisher': 'LIMOD',
+                'version': version, 'architecture': 'x64', 'sha256': digest, 'length': length, 'codeSigned': False}
+    if not isinstance(proof, dict) or any(proof.get(k) != v for k, v in expected.items()) or proof.get('identity') not in ('LIMOD.XBar.Desktop','LIMOD.XBar.Desktop.UpdaterLab'):
+        raise SystemExit('Unsigned desktop installer verification does not match the candidate.')
+    return {'Name': proof['identity'], 'Publisher': proof['publisher'], 'Version': version, 'ProcessorArchitecture': 'x64'}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('package', type=Path)
@@ -38,6 +47,7 @@ def main():
     parser.add_argument('--verification', type=Path, help='Passed Windows verify-release.ps1 report; required for public candidates')
     parser.add_argument('--account', default='com.limod.xbar.updates')
     parser.add_argument('--allow-development', action='store_true', help='Prepare a private test candidate, not a public release')
+    parser.add_argument('--desktop-version', help='Use the explicitly unsigned desktop EXE distribution')
     parser.add_argument('--lab', action='store_true', help='Allow loopback URL only for LIMOD.XBar.UpdaterLab')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2]
@@ -45,18 +55,25 @@ def main():
     key = run([args.tools/'generate_keys', '--account', args.account, '-p'])
     if key != expected_key:
         raise SystemExit('Keychain public key differs from the product update key.')
-    with zipfile.ZipFile(args.package) as archive:
-        if archive.namelist().count('AppxManifest.xml') != 1 or 'AppxSignature.p7x' not in archive.namelist():
-            raise SystemExit('A signed MSIX is required. Sign and verify it on Windows first.')
-        manifest = ET.fromstring(archive.read('AppxManifest.xml'))
-    identity = manifest.find('{http://schemas.microsoft.com/appx/manifest/foundation/windows10}Identity').attrib
+    with args.package.open('rb') as package_file:
+        digest = hashlib.file_digest(package_file, 'sha256').hexdigest()
+    if args.desktop_version:
+        if not args.verification:
+            raise SystemExit('Desktop installers require --verification from package-desktop.ps1.')
+        identity = verify_desktop_report(args.verification, args.desktop_version, digest, args.package.stat().st_size)
+    else:
+        with zipfile.ZipFile(args.package) as archive:
+            if archive.namelist().count('AppxManifest.xml') != 1 or 'AppxSignature.p7x' not in archive.namelist():
+                raise SystemExit('A signed MSIX is required. Sign and verify it on Windows first.')
+            manifest = ET.fromstring(archive.read('AppxManifest.xml'))
+        identity = manifest.find('{http://schemas.microsoft.com/appx/manifest/foundation/windows10}Identity').attrib
     version = identity['Version']
     if not re.fullmatch(r'\d{1,5}(?:\.\d{1,5}){3}', version) or any(int(x) > 65535 for x in version.split('.')):
         raise SystemExit('Invalid MSIX version.')
     if identity['Name'].endswith(('.Dev', '.UpdaterLab')) and not args.allow_development:
         raise SystemExit('Use --allow-development for a private development candidate.')
     url = urlparse(args.url)
-    lab = args.lab and identity['Name'] == 'LIMOD.XBar.UpdaterLab' and url.scheme == 'http' and url.hostname == '127.0.0.1'
+    lab = args.lab and identity['Name'] in ('LIMOD.XBar.UpdaterLab','LIMOD.XBar.Desktop.UpdaterLab') and url.scheme == 'http' and url.hostname == '127.0.0.1'
     public = url.scheme == 'https' and url.hostname == 'github.com' and url.path.startswith('/yooongZa/xbar/releases/download/') and url.port in (None, 443)
     if not (lab or public) or url.username or url.password or url.fragment or url.query:
         raise SystemExit('Use the product GitHub release URL or the isolated lab loopback server.')
@@ -65,7 +82,7 @@ def main():
         raise SystemExit('Invalid localized notes.')
     with args.package.open('rb') as package_file:
         digest = hashlib.file_digest(package_file, 'sha256').hexdigest()
-    if not args.allow_development:
+    if not args.allow_development and not args.desktop_version:
         if not args.verification:
             raise SystemExit('Public candidates require --verification from Windows verify-release.ps1.')
         verify_report(args.verification, identity, digest, args.package.stat().st_size)
@@ -75,7 +92,7 @@ def main():
         'publishedAt': datetime.now(timezone.utc).isoformat(), 'notes': notes,
         'packages': [{'identity': identity['Name'], 'publisher': identity['Publisher'],
                       'architecture': identity['ProcessorArchitecture'], 'url': args.url,
-                      'length': args.package.stat().st_size, 'sha256': digest}]
+                      'length': args.package.stat().st_size, 'sha256': digest, 'format': 'exe' if args.desktop_version else 'msix'}]
     }
     raw = json.dumps(payload, ensure_ascii=False, separators=(',', ':')).encode()
     with tempfile.TemporaryDirectory(prefix='xbar-windows-feed-') as folder:

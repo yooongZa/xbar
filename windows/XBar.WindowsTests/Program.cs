@@ -21,7 +21,7 @@ internal static class Program
         var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         app.Startup += async (_, _) => {
             var output = Path.GetFullPath(args.FirstOrDefault() ?? "windows-results.json");
-            try { if (args.Contains("--lab-cookie-write") || args.Contains("--lab-cookie-read")) await LabCookieAsync(args.Contains("--lab-cookie-write")); else if (args.Contains("--login-only")) await AutoLoginTests.Run(Check); else if (args.Contains("--browser-only")) await BrowserVisibilityAsync(); else if (args.Contains("--updates-only")) await UpdaterTests.Run(Check); else if (args.Contains("--settings-only")) await SettingsTests.Run(Check, Path.GetDirectoryName(output)!); else if (args.Contains("--layout-only")) RunLayout(Path.GetDirectoryName(output)!); else await RunAsync(Path.GetDirectoryName(output)!); }
+            try { if (args.Contains("--lab-cookie-write") || args.Contains("--lab-cookie-read")) await LabCookieAsync(args.Contains("--lab-cookie-write")); else if (args.Contains("--desktop-only")) await DesktopTests.Run(Check); else if (args.Contains("--login-only")) await AutoLoginTests.Run(Check); else if (args.Contains("--browser-only")) await BrowserVisibilityAsync(); else if (args.Contains("--updates-only")) await UpdaterTests.Run(Check); else if (args.Contains("--settings-only")) await SettingsTests.Run(Check, Path.GetDirectoryName(output)!); else if (args.Contains("--layout-only")) RunLayout(Path.GetDirectoryName(output)!); else await RunAsync(Path.GetDirectoryName(output)!); }
             catch (Exception e) { Check("Harness completed", false, e.ToString()); }
             Directory.CreateDirectory(Path.GetDirectoryName(output)!); File.WriteAllText(output, JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true }));
             Console.WriteLine($"Windows integration: {results.Count - failures} passed, {failures} failed"); app.Shutdown(failures == 0 ? 0 : 1);
@@ -60,7 +60,7 @@ internal static class Program
         using var session = new WebSession(root); var surface = await session.CreateAsync(true, "X-Bar updater cookie fixture");
         var manager = surface.View.CoreWebView2.CookieManager;
         if (write) { var cookie = manager.CreateCookie("xbar_updater_fixture", "synthetic-session", ".x.com", "/"); cookie.Expires = DateTime.UtcNow.AddDays(1); manager.AddOrUpdateCookie(cookie); }
-        Check("Isolated synthetic cookie survives " + (write ? "write" : "MSIX update"), (await manager.GetCookiesAsync("https://x.com")).Any(c => c.Name == "xbar_updater_fixture" && c.Value == "synthetic-session"));
+        Check("Isolated synthetic cookie survives " + (write ? "write" : "installer update"), (await manager.GetCookiesAsync("https://x.com")).Any(c => c.Name == "xbar_updater_fixture" && c.Value == "synthetic-session"));
     }
     private static void RunLayout(string output)
     {

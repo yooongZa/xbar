@@ -14,16 +14,6 @@ internal interface IStartupPreference
     Task<StartupTaskState> ReadAsync();
     Task<StartupTaskState> SetAsync(bool enabled);
 }
-internal sealed class WindowsStartupPreference : IStartupPreference
-{
-    public async Task<StartupTaskState> ReadAsync() => (await StartupTask.GetAsync("XBarStartup")).State;
-    public async Task<StartupTaskState> SetAsync(bool enabled)
-    {
-        var task = await StartupTask.GetAsync("XBarStartup");
-        if (enabled) return await task.RequestEnableAsync();
-        task.Disable(); return (await StartupTask.GetAsync("XBarStartup")).State;
-    }
-}
 internal sealed class SettingsWindow : Window
 {
     private readonly StateStore store;
@@ -43,7 +33,7 @@ internal sealed class SettingsWindow : Window
     public void RefreshUpdate() => refreshUpdate?.Invoke();
     public SettingsWindow(Collector collector, StateStore store, Func<AppCommand, Task> execute, AppUpdater? updater = null, IStartupPreference? startupPreference = null)
     {
-        this.store = store; this.collector = collector; this.startupPreference = startupPreference ?? new WindowsStartupPreference();
+        this.store = store; this.collector = collector; this.startupPreference = startupPreference ?? new DesktopStartupPreference();
         Theme.Install(); Style = (Style)Application.Current.FindResource(typeof(Window));
         string T(string key) => L10n.T(key, collector.Settings.Language);
         Title = "X-Bar · " + T("settings"); Width = 600; Height = 650; MinWidth = 500; MinHeight = 470;
@@ -82,13 +72,7 @@ internal sealed class SettingsWindow : Window
         }
         CheckBox Check(StackPanel group, string key, bool value)
         { var c = new CheckBox { Content = T(key), IsChecked = value, Margin = new(0, 5, 0, 7), MinHeight = 28 }; AutomationProperties.SetAutomationId(c, key); group.Children.Add(c); return c; }
-        var display = Section(widgets, T("mode")); var modes = new UniformGrid { Rows = 1, Columns = 3 }; var selectedMode = collector.Settings.Mode;
-        foreach (var mode in Enum.GetValues<DisplayMode>()) {
-            var radio = UI.Segment(T(mode == DisplayMode.Desktop ? "desktop" : mode == DisplayMode.Windows ? "windows" : "both"), "displayMode");
-            radio.Content = new TextBlock { Text = radio.Content.ToString()!, FontSize = 12, TextWrapping = TextWrapping.Wrap }; radio.Margin = new(2); radio.IsChecked = mode == selectedMode; radio.Checked += (_, _) => selectedMode = mode; modes.Children.Add(radio);
-        }
-        display.Children.Add(modes); registration.Margin = new(2, 12, 0, 8); display.Children.Add(registration);
-        var guide = new Expander { Header = T("pin.guide"), Content = UI.Text(T("pin"), 12, "Muted"), Padding = new(0, 4, 0, 0) }; display.Children.Add(guide);
+        var selectedMode = DisplayMode.Desktop;
         var appearance = Section(widgets, T("appearance"));
         var topmost = Check(appearance, "topmost", collector.Settings.AlwaysOnTop); var effects = Check(appearance, "effects", collector.Settings.Effects); appearance.Children.Add(UI.Text(T("theme.note"), 11, "Muted"));
         var connection = Section(account, T("account")); var connectionStatus = UI.Text("", 13); connection.Children.Add(connectionStatus);
@@ -150,17 +134,15 @@ internal sealed class SettingsWindow : Window
             try {
                 var state = await this.startupPreference.ReadAsync(); if (closed) return;
                 startupState = state; startup.IsChecked = StartupEnabled(state); startup.IsEnabled = state is StartupTaskState.Enabled or StartupTaskState.Disabled;
-            } catch (Exception e) when (e is System.Runtime.InteropServices.COMException or InvalidOperationException) { if (!closed) startup.IsEnabled = false; }
+            } catch (Exception e) when (e is System.Runtime.InteropServices.COMException or InvalidOperationException or UnauthorizedAccessException or System.IO.IOException) { if (!closed) startup.IsEnabled = false; }
         };
         navigation[0].IsChecked = true; RefreshRegistration();
     }
     private static bool StartupEnabled(StartupTaskState state) => state is StartupTaskState.Enabled or StartupTaskState.EnabledByPolicy;
     private static string Version()
-    { try { var v = Package.Current.Id.Version; return $"{v.Major}.{v.Minor}.{v.Build}"; } catch { return Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.3.0"; } }
+    { return Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.4.1"; }
     public void RefreshRegistration()
     {
-        var state = store.Read<WidgetRegistration>("registration.json");
-        registration.Text = L10n.T(state is null || state.Error is not null || DateTimeOffset.UtcNow - state.CheckedAt > TimeSpan.FromMinutes(2) ? "pin.unknown" : state.Count > 0 ? "pinned" : "pin.needed", collector.Settings.Language);
         refreshAccount?.Invoke();
     }
 }
