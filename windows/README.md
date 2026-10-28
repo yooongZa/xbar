@@ -2,6 +2,8 @@
 
 Windows 11 x64용 **바탕화면 위젯**이다. 0.4부터 Windows Widgets Board 공급자를 배포에서 제외하고, 코드 서명 없는 사용자 계정용 EXE 설치 프로그램을 사용한다. 관리자 권한·인증서 등록·개발자 모드 없이 설치하도록 구성했다.
 
+2026-10-28 공개: **[0.4.1 beta.1 릴리스](https://github.com/yooongZa/xbar/releases/tag/windows-v0.4.1-beta.1)** · [Windows 설치 파일](https://github.com/yooongZa/xbar/releases/download/windows-v0.4.1-beta.1/XBar-0.4.1.0-windows-x64-setup.exe) · [검증 기록](VALIDATION-0.4.1.md).
+
 설치 파일에 Windows 코드 서명이 없어 SmartScreen 경고가 표시되거나 PC 보안 정책에 따라 실행이 차단될 수 있다. 앱은 Windows 보안 설정을 변경하지 않는다. 배포 파일은 [GitHub Releases](https://github.com/yooongZa/xbar/releases)의 Windows 릴리스에서 확인한다. 현재 공개 상태와 검증 결과는 해당 릴리스에 기록한다.
 
 ## 사용
