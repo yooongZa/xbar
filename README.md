@@ -2,8 +2,8 @@
 
 | Mac | Windows |
 | --- | --- |
-| **[Mac 다운로드 · Download](https://github.com/yooongZa/xbar/releases/download/v0.5.4/X-Bar-0.5.4-macOS-universal.dmg)** | **[Windows 다운로드 · Download](https://github.com/yooongZa/xbar/releases/download/windows-v0.4.2-beta.1/XBar-0.4.2.0-windows-x64-setup.exe)** |
-| 0.5.4 · macOS 14+ · Apple Silicon / Intel | 0.4.2 beta.1 · Windows 11 x64 |
+| **[Mac 다운로드 · Download](https://github.com/yooongZa/xbar/releases/download/v0.5.4/X-Bar-0.5.4-macOS-universal.dmg)** | **[Windows 다운로드 · Download](https://github.com/yooongZa/xbar/releases/download/windows-v0.4.3-beta.1/XBar-0.4.3.0-windows-x64-setup.exe)** |
+| 0.5.4 · macOS 14+ · Apple Silicon / Intel | 0.4.3 beta.1 · Windows 11 x64 |
 | DMG · Signed & notarized | EXE · Unsigned installer |
 | [설치 안내 · Install](https://yooongza.github.io/xbar/#install) | [설치 안내 · Install](windows/README.md) |
 

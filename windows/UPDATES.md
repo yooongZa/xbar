@@ -23,13 +23,13 @@ Windows Restart Manager의 조건 때문에 실행 직후 업데이트하면 준
 고정 주소는 `https://yooongza.github.io/xbar/windows-updates.json`이다. macOS `appcast.xml`을 수정하지 않는다. 기존 macOS Keychain의 업데이트 키를 Sparkle 도구로 사용하며 개인키를 내보내지 않는다.
 
 ```sh
-python3 windows/scripts/prepare-update.py XBar-0.4.2.0-windows-x64-setup.exe \
-  --desktop-version 0.4.2.0 \
+python3 windows/scripts/prepare-update.py XBar-0.4.3.0-windows-x64-setup.exe \
+  --desktop-version 0.4.3.0 \
   --tools /path/to/Sparkle/bin \
   --feed outputs/windows/windows-updates.json \
-  --url https://github.com/yooongZa/xbar/releases/download/windows-v0.4.2-beta.1/XBar-0.4.2.0-windows-x64-setup.exe \
+  --url https://github.com/yooongZa/xbar/releases/download/windows-v0.4.3-beta.1/XBar-0.4.3.0-windows-x64-setup.exe \
   --notes release-notes.json \
-  --verification XBar-0.4.2.0-windows-x64-setup.exe.verification.json
+  --verification XBar-0.4.3.0-windows-x64-setup.exe.verification.json
 ```
 
 보고서의 제품·버전·포맷·해시·길이·무서명 상태가 후보와 다르면 게시 도구가 중단한다. 패키지를 먼저 공개하고 재다운로드로 확인한 뒤 목록을 게시한다. MSIX 개발판으로는 새 EXE가 자동 설치되지 않는다.
