@@ -1,28 +1,37 @@
 # 𝕏-Bar
 
+| Mac | Windows |
+| --- | --- |
+| **[Mac 다운로드 · Download](https://github.com/yooongZa/xbar/releases/download/v0.5.4/X-Bar-0.5.4-macOS-universal.dmg)** | **[Windows 다운로드 · Download](https://github.com/yooongZa/xbar/releases/download/windows-v0.4.2-beta.1/XBar-0.4.2.0-windows-x64-setup.exe)** |
+| 0.5.4 · macOS 14+ · Apple Silicon / Intel | 0.4.2 beta.1 · Windows 11 x64 |
+| DMG · Signed & notarized | EXE · Unsigned installer |
+| [설치 안내 · Install](https://yooongza.github.io/xbar/#install) | [설치 안내 · Install](windows/README.md) |
+
 **[한국어](README.ko.md) · [English](README.en.md) · [日本語](README.ja.md)**
 
-Your X posts, at a glance in the Mac menu bar.
+Your X posts, at a glance in the Mac menu bar or on your Windows desktop.
 
-| 언어 / Language / 言語 | 소개 / About / 紹介 | 다운로드 / Download / ダウンロード |
-| --- | --- | --- |
-| 한국어 | 메뉴바에서 내 글의 반응을 한눈에. | [Mac용 무료 다운로드](https://yooongza.github.io/xbar/) |
-| English | Keep your posts’ performance close, and your focus closer. | [Free download for Mac](https://yooongza.github.io/xbar/en.html) |
-| 日本語 | 投稿の反応を、メニューバーでひと目に。 | [Mac版を無料ダウンロード](https://yooongza.github.io/xbar/ja.html) |
+| 언어 / Language / 言語 | 홈페이지 / Website / Webサイト |
+| --- | --- |
+| 한국어 | [Mac·Windows 다운로드 안내](https://yooongza.github.io/xbar/) |
+| English | [Mac and Windows downloads](https://yooongza.github.io/xbar/en.html) |
+| 日本語 | [Mac・Windowsのダウンロード案内](https://yooongza.github.io/xbar/ja.html) |
 
 **[𝕏 Follow the creator · 제작자 팔로우 · 開発者をフォロー → @yongZa_R](https://x.com/yongZa_R)**
 
-Free · macOS 14+ · Apple Silicon & Intel · 한국어 / English / 日本語
+Free · macOS 14+ / Windows 11 x64 · 한국어 / English / 日本語
+
+Windows is currently a beta with an unsigned installer. SmartScreen may warn, or device policy may block it. See the [Windows installation guide](windows/README.md).
 
 [![X-Bar: actual menu bar and popover](assets/xbar-ko.png)](https://yooongza.github.io/xbar/)
 
 ## Start here / 시작하기 / はじめに
 
-Download the DMG from the website, drag X-Bar into Applications, then connect your X account. No GitHub account is needed. Safari connection and in-app sign-in are supported; your X account must have access to X Analytics.
+**Mac:** Open the DMG and drag X-Bar into Applications. **Windows:** Run the EXE installer. Then connect your X account in the app; Mac also supports Safari connection. No GitHub account is needed. Your X account must have access to X Analytics.
 
-웹사이트에서 DMG를 받아 X-Bar를 응용 프로그램에 넣고 X 계정을 연결하세요. GitHub 가입은 필요 없습니다. Safari 연결과 앱 내 로그인을 지원하며, X 분석 화면에 접근할 수 있는 계정이 필요합니다.
+**Mac:** DMG를 열어 X-Bar를 응용 프로그램에 넣으세요. **Windows:** EXE 설치 파일을 실행하세요. 앱에서 X 계정을 연결하면 됩니다. Mac에서는 Safari 연결도 지원합니다. GitHub 가입은 필요 없으며, X 분석 화면에 접근할 수 있는 계정이 필요합니다.
 
-WebサイトからDMGをダウンロードし、X-Barをアプリケーションフォルダに入れてXアカウントを接続してください。GitHubへの登録は不要です。Safariからの接続とアプリ内ログインに対応しています。Xアナリティクスを利用できるアカウントが必要です。
+**Mac:** DMGを開き、X-Barをアプリケーションフォルダへ移動してください。**Windows:** EXEインストーラーを実行してください。アプリ内でXアカウントを接続できます。MacではSafari接続にも対応しています。GitHubへの登録は不要です。Xアナリティクスを利用できるアカウントが必要です。
 
 ## Source / 소스 코드 / ソースコード
 

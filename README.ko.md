@@ -1,18 +1,26 @@
 # 𝕏-Bar
 
+| Mac | Windows |
+| --- | --- |
+| **[Mac 다운로드](https://github.com/yooongZa/xbar/releases/download/v0.5.4/X-Bar-0.5.4-macOS-universal.dmg)** | **[Windows 다운로드](https://github.com/yooongZa/xbar/releases/download/windows-v0.4.2-beta.1/XBar-0.4.2.0-windows-x64-setup.exe)** |
+| 0.5.4 · macOS 14+ · Apple Silicon / Intel | 0.4.2 beta.1 · Windows 11 x64 |
+| DMG · Signed & notarized | EXE · Unsigned installer |
+
+Windows는 베타이며 코드 서명 없는 EXE를 제공합니다. SmartScreen 경고 또는 기기 정책에 따른 실행 제한이 있을 수 있습니다. [설치 안내](windows/README.md).
+
 [한국어](README.ko.md) · [English](README.en.md) · [日本語](README.ja.md)
 
 **메뉴바에서 내 글의 반응을 한눈에.**
 
 글을 올린 뒤 반응이 궁금할 때, Mac 위쪽에서 가볍게 확인하세요. X-Bar는 오늘 노출 수와 인기 게시물을 메뉴바에 보여주는 무료 오픈소스 앱입니다.
 
-**[Mac용 무료 다운로드](https://yooongza.github.io/xbar/)** · **[제작자 @yongZa_R 팔로우 ↗](https://x.com/yongZa_R)**
+**[제작자 @yongZa_R 팔로우 ↗](https://x.com/yongZa_R)**
 
 macOS 14 이상 · Apple Silicon 및 Intel · 한국어 / English / 日本語
 
-## 설치하고 시작하기
+## Mac 설치하고 시작하기
 
-1. 위 다운로드 페이지에서 **Mac용 다운로드**를 누릅니다. GitHub 가입은 필요 없습니다.
+1. 상단의 **Mac 다운로드**를 누릅니다. GitHub 가입은 필요 없습니다.
 2. 받은 DMG를 열고 **X-Bar를 응용 프로그램으로 드래그**합니다.
 3. 응용 프로그램에서 X-Bar를 실행합니다. 이미 설치한 버전이 있다면 먼저 종료해 주세요.
 4. **Safari로 연결** 또는 **앱에서 직접 로그인**을 선택합니다.

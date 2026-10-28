@@ -1,18 +1,26 @@
 # 𝕏-Bar
 
+| Mac | Windows |
+| --- | --- |
+| **[Mac版をダウンロード](https://github.com/yooongZa/xbar/releases/download/v0.5.4/X-Bar-0.5.4-macOS-universal.dmg)** | **[Windows版をダウンロード](https://github.com/yooongZa/xbar/releases/download/windows-v0.4.2-beta.1/XBar-0.4.2.0-windows-x64-setup.exe)** |
+| 0.5.4 · macOS 14+ · Apple Silicon / Intel | 0.4.2 beta.1 · Windows 11 x64 |
+| DMG · Signed & notarized | EXE · Unsigned installer |
+
+Windowsは未署名EXEのベータ版です。SmartScreenの警告や端末ポリシーによる実行制限が生じる場合があります。 [インストール方法](windows/README.md).
+
 [한국어](README.ko.md) · [English](README.en.md) · [日本語](README.ja.md)
 
 **投稿の反応を、メニューバーでひと目に。**
 
 投稿したあとの反応が気になったら、Macの画面上部でさっと確認。X-Barは今日のインプレッションと人気の投稿を表示する、無料のオープンソースアプリです。
 
-**[Mac版を無料ダウンロード](https://yooongza.github.io/xbar/ja.html)** · **[開発者 @yongZa_R をフォロー ↗](https://x.com/yongZa_R)**
+**[開発者 @yongZa_R をフォロー ↗](https://x.com/yongZa_R)**
 
 macOS 14以降 · Apple Silicon / Intel · 한국어 / English / 日本語
 
-## インストールと使い始め方
+## Macのインストールと使い始め方
 
-1. Webサイトの **Mac版をダウンロード** を押します。GitHubへの登録は不要です。
+1. このページ上部の **Mac版をダウンロード** を押します。GitHubへの登録は不要です。
 2. DMGを開き、**X-Barをアプリケーションフォルダへドラッグ**します。
 3. アプリケーションフォルダから起動します。旧バージョンが起動している場合は、先に終了してください。
 4. **Safariで接続** または **アプリ内でログイン** を選びます。

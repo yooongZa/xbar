@@ -1,18 +1,26 @@
 # 𝕏-Bar
 
+| Mac | Windows |
+| --- | --- |
+| **[Download for Mac](https://github.com/yooongZa/xbar/releases/download/v0.5.4/X-Bar-0.5.4-macOS-universal.dmg)** | **[Download for Windows](https://github.com/yooongZa/xbar/releases/download/windows-v0.4.2-beta.1/XBar-0.4.2.0-windows-x64-setup.exe)** |
+| 0.5.4 · macOS 14+ · Apple Silicon / Intel | 0.4.2 beta.1 · Windows 11 x64 |
+| DMG · Signed & notarized | EXE · Unsigned installer |
+
+Windows is a beta with an unsigned EXE. SmartScreen may warn, or device policy may block it. [Installation guide](windows/README.md).
+
 [한국어](README.ko.md) · [English](README.en.md) · [日本語](README.ja.md)
 
 **Your posts’ performance, right in the Mac menu bar.**
 
 Curious how your posts are doing? Take a quick look, then get back to your day. X-Bar is a free, open-source Mac app for today’s impressions and your top posts.
 
-**[Free download for Mac](https://yooongza.github.io/xbar/en.html)** · **[Follow the creator @yongZa_R ↗](https://x.com/yongZa_R)**
+**[Follow the creator @yongZa_R ↗](https://x.com/yongZa_R)**
 
 macOS 14+ · Apple Silicon & Intel · 한국어 / English / 日本語
 
-## Install and get started
+## Install and get started on Mac
 
-1. Choose **Download for Mac** on the website. No GitHub account is required.
+1. Choose **Download for Mac** at the top of this page. No GitHub account is required.
 2. Open the downloaded DMG and **drag X-Bar into Applications**.
 3. Launch X-Bar from Applications. Quit any previously installed version first.
 4. Choose **Connect with Safari** or **Sign in within the app**.
