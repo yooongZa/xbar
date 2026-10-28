@@ -47,3 +47,12 @@ Inno Setup 네이티브 컴파일러로 설치 파일을 생성했다. PowerShel
 `dotnet test` / `dotnet publish` / `dotnet build`에 `RestoreLockedMode=true`를 적용했다. Windows 시험 실행 파일의 기본 검사와 `--login-only`, `--settings-only`, `--browser-only`, `--recovery-only`, `--updates-only`, `--desktop-only`, `--layout-only`, 배포 도구의 `python3 -m unittest`를 실행했다. 원본 결과는 `outputs/windows/release-0.4.3/`에 보관한다.
 
 한 대의 Windows 11 x64 PC에서 검증했다. 실계정 비밀번호·2단계 인증을 입력한 Apple 인증 최종 완료, ARM64·다른 PC·장기 실행은 미검증이다. 개인 계정 화면·로그인 데이터·시험 설치 파일은 공개 릴리스에 포함하지 않는다.
+
+## 공개 확인
+
+- 공개 GitHub 주소에서 인증 없이 설치 EXE와 소스 ZIP을 다시 내려받았으며 원본과 SHA-256이 일치했다.
+- 한국어·영어·일본어 홈페이지와 `windows-updates.json`을 공개 주소에서 읽어 게시 원본과 바이트 단위로 대조했다. 두 운영체제 다운로드의 같은 위계를 유지했다.
+- 실제 설치된 0.4.2 앱에서 공개 목록을 읽어 **X-Bar 0.4.3 / 설치하고 재시작** 안내가 표시됨을 확인했다. 이 확인에서는 설치를 요청하지 않았다. 확인 도중 설정이 유지됐고 로그인·수집 상태는 `Ready`였다.
+- macOS Latest는 `v0.5.4`이며 macOS 앱과 appcast를 변경하지 않았다.
+- 시험 앱·프로필·예약 작업·루프백 서버와 SSH 시험 연결을 정리했다.
+- 공개 검증 결과는 릴리스의 `XBar-Windows-0.4.3-beta.1-public-verification.json`에 첨부했다.
