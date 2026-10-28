@@ -55,7 +55,8 @@ internal static class SettingsTests
         startup.Pending.SetResult(); await Task.Delay(60);
         Check("Accepted startup save commits once then closes", !pending.IsVisible && updater.Preferences.AutomaticChecks && startup.State == StartupTaskState.Enabled && startup.Writes == 2);
         startup.Pending = null;
-        var signedOut = Open(); signedOut.Navigation[1].IsChecked = true; signedOut.UpdateLayout();
+        var signedOut = Open(); signedOut.UpdateLayout();
+        Check("First disconnected launch opens account setup and visible sign-in", signedOut.Navigation[1].IsChecked == true && FindById<TextBlock>(signedOut, "account.setup")!.IsVisible && FindById<Button>(signedOut, "account.signin")!.IsVisible);
         var signIn = FindById<Button>(signedOut, "account.signin")!;
         signIn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Check("Signed-out account offers only sign-in and routes to login", signIn.IsVisible && !FindById<Button>(signedOut, "account.analysis")!.IsVisible && !FindById<Button>(signedOut, "account.signout")!.IsVisible && commands.Last().Action == "login");
@@ -63,6 +64,10 @@ internal static class SettingsTests
         var analysis = FindById<Button>(signedOut, "account.analysis")!;
         analysis.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Check("Signed-in account replaces login with analytics and sign-out", !signIn.IsVisible && analysis.IsVisible && FindById<Button>(signedOut, "account.signout")!.IsVisible && commands.Last().Action == "analysis");
+        Check("Account setup guidance disappears after connection", !FindById<TextBlock>(signedOut, "account.setup")!.IsVisible);
+        var returning = Open(); returning.UpdateLayout();
+        Check("Connected users retain the usual widget settings landing page", returning.Navigation[0].IsChecked == true);
+        returning.Close();
         signedOut.Close(); collector.UpdateSettings(collector.Settings with { Connected = false });
         Directory.CreateDirectory(output);
         foreach (var theme in new[] { "light", "dark" }) foreach (var language in new[] { "ko", "en", "ja" }) {

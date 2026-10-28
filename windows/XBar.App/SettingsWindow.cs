@@ -75,7 +75,9 @@ internal sealed class SettingsWindow : Window
         var selectedMode = DisplayMode.Desktop;
         var appearance = Section(widgets, T("appearance"));
         var topmost = Check(appearance, "topmost", collector.Settings.AlwaysOnTop); var effects = Check(appearance, "effects", collector.Settings.Effects); appearance.Children.Add(UI.Text(T("theme.note"), 11, "Muted"));
-        var connection = Section(account, T("account")); var connectionStatus = UI.Text("", 13); connection.Children.Add(connectionStatus);
+        var connection = Section(account, T("account"));
+        var setup = UI.Text(T("account.setup"), 13, "Muted"); setup.Margin = new(0, 0, 0, 12); AutomationProperties.SetAutomationId(setup, "account.setup"); connection.Children.Add(setup);
+        var connectionStatus = UI.Text("", 13); connection.Children.Add(connectionStatus);
         var accountActions = new WrapPanel { Margin = new(0, 12, 0, 0) }; connection.Children.Add(accountActions);
         var signIn = UI.Button(T("login"), () => _ = execute(new("login")), "XBar.Primary"); signIn.Margin = new(0, 0, 6, 0); accountActions.Children.Add(signIn);
         var analysis = UI.Button(T("analysis"), () => _ = execute(new("analysis")), "XBar.Primary"); analysis.Margin = new(0, 0, 6, 0); accountActions.Children.Add(analysis);
@@ -83,6 +85,7 @@ internal sealed class SettingsWindow : Window
         AutomationProperties.SetAutomationId(signIn, "account.signin"); AutomationProperties.SetAutomationId(analysis, "account.analysis"); AutomationProperties.SetAutomationId(disconnect, "account.signout");
         refreshAccount = () => {
             bool connected = collector.Settings.Connected && collector.State.Status != CollectionStatus.NeedsLogin;
+            setup.Visibility = connected ? Visibility.Collapsed : Visibility.Visible;
             connectionStatus.Text = T(connected ? "connected" : "disconnected") + (connected && collector.State.Today is { } today ? " · " + today.Account : "");
             signIn.Visibility = connected ? Visibility.Collapsed : Visibility.Visible;
             analysis.Visibility = connected ? Visibility.Visible : Visibility.Collapsed;
@@ -136,7 +139,7 @@ internal sealed class SettingsWindow : Window
                 startupState = state; startup.IsChecked = StartupEnabled(state); startup.IsEnabled = state is StartupTaskState.Enabled or StartupTaskState.Disabled;
             } catch (Exception e) when (e is System.Runtime.InteropServices.COMException or InvalidOperationException or UnauthorizedAccessException or System.IO.IOException) { if (!closed) startup.IsEnabled = false; }
         };
-        navigation[0].IsChecked = true; RefreshRegistration();
+        navigation[collector.Settings.Connected && collector.State.Status != CollectionStatus.NeedsLogin ? 0 : 1].IsChecked = true; RefreshRegistration();
     }
     private static bool StartupEnabled(StartupTaskState state) => state is StartupTaskState.Enabled or StartupTaskState.EnabledByPolicy;
     private static string Version()

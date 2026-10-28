@@ -118,5 +118,6 @@ internal static class AutoLoginTests
         await collector.OpenBrowserAsync(login: true); await browser!.NavigateAsync("https://x.com/home", CancellationToken.None);
         collector.Dispose(); await Task.Delay(1300);
         Check("Exit cancels pending detection and leaves disconnected settings", !store.LoadSettings().Connected && !collector.IsWatchingLogin);
+        await PopupLoginTests.Run(check);
     }
 }

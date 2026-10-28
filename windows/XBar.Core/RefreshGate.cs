@@ -23,6 +23,7 @@ public sealed class RefreshRetry
 public static class NavigationPolicy
 {
     public static bool Trusted(string? value) => Uri.TryCreate(value, UriKind.Absolute, out var u) && u.Scheme == "https" && u.UserInfo == "" && u.Port == 443 && u.Host is "x.com" or "www.x.com";
+    public static bool GoogleAuthentication(string? value) => Uri.TryCreate(value, UriKind.Absolute, out var u) && u.Scheme == "https" && u.UserInfo == "" && u.Port == 443 && u.Host == "accounts.google.com";
     public static bool Allowed(string? value) => Uri.TryCreate(value, UriKind.Absolute, out var u) && u.Scheme == "https" && u.UserInfo == "" && u.Port == 443 && new[] { "x.com", "twitter.com", "appleid.apple.com" }.Any(d => u.Host == d || u.Host.EndsWith("." + d, StringComparison.OrdinalIgnoreCase));
     public static bool CanRecover(string? url, PageReading reading) => Trusted(url) && reading.Status == "off_page" && reading.CanRecover && MetricRecord.ValidAccount(reading.Account);
 }

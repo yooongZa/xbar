@@ -112,6 +112,16 @@ public sealed class RegressionTests
     [InlineData("https://x.com/home", true)] [InlineData("https://x.com.evil.test/home", false)] [InlineData("http://x.com/home", false)] [InlineData("https://evil@x.com/home", false)] [InlineData("https://x.com:8443/home", false)]
     public void RecoveryRequiresTrustedPage(string url, bool expected) => Assert.Equal(expected, NavigationPolicy.CanRecover(url, new("off_page", Account: "@fixture", CanRecover: true)));
     [Fact] public void AuthenticationInputBlocksRecovery() => Assert.False(NavigationPolicy.CanRecover("https://x.com/home", new("off_page", Account: "@fixture", CanRecover: false)));
+    [Theory]
+    [InlineData("https://accounts.google.com/o/oauth2/v2/auth", true)]
+    [InlineData("https://accounts.google.com/gsi/select", true)]
+    [InlineData("https://accounts.google.com.evil.example/", false)]
+    [InlineData("http://accounts.google.com/", false)]
+    [InlineData("https://evil@accounts.google.com/", false)]
+    [InlineData("https://accounts.google.com:8443/", false)]
+    [InlineData("https://appleid.apple.com/auth/authorize", false)]
+    public void GoogleLoginGetsGuidanceWithoutAllowingEmbeddedAuthentication(string url, bool expected)
+    { Assert.Equal(expected, NavigationPolicy.GoogleAuthentication(url)); if (expected) Assert.False(NavigationPolicy.Allowed(url)); }
     [Fact] public void CardsHideStaleOrDisconnectedAccountData()
     {
         var ready = Ready(); var current = WidgetCard.Render(ready, "Small", Start, Zone); Assert.Contains("1,234", current);
