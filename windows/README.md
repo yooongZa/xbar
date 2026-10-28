@@ -2,7 +2,7 @@
 
 Windows 11 x64용 **바탕화면 위젯**이다. 0.4부터 Windows Widgets Board 공급자를 배포에서 제외하고, 코드 서명 없는 사용자 계정용 EXE 설치 프로그램을 사용한다. 관리자 권한·인증서 등록·개발자 모드 없이 설치하도록 구성했다.
 
-2026-10-28 공개: **[0.4.1 beta.1 릴리스](https://github.com/yooongZa/xbar/releases/tag/windows-v0.4.1-beta.1)** · [Windows 설치 파일](https://github.com/yooongZa/xbar/releases/download/windows-v0.4.1-beta.1/XBar-0.4.1.0-windows-x64-setup.exe) · [검증 기록](VALIDATION-0.4.1.md).
+2026-10-28 공개: **[0.4.2 beta.1 릴리스](https://github.com/yooongZa/xbar/releases/tag/windows-v0.4.2-beta.1)** · [Windows 설치 파일](https://github.com/yooongZa/xbar/releases/download/windows-v0.4.2-beta.1/XBar-0.4.2.0-windows-x64-setup.exe) · [검증 기록](VALIDATION-0.4.2.md).
 
 설치 파일에 Windows 코드 서명이 없어 SmartScreen 경고가 표시되거나 PC 보안 정책에 따라 실행이 차단될 수 있다. 앱은 Windows 보안 설정을 변경하지 않는다. 배포 파일은 [GitHub Releases](https://github.com/yooongZa/xbar/releases)의 Windows 릴리스에서 확인한다. 현재 공개 상태와 검증 결과는 해당 릴리스에 기록한다.
 
@@ -27,7 +27,7 @@ Windows 11 x64, .NET SDK 10.0.107 호환 패치, WebView2 Runtime, Inno Setup 6.
 
 ```powershell
 .\windows\scripts\build.ps1
-.\windows\scripts\package-desktop.ps1 -Version 0.4.1.0 -ISCC 'C:\path\to\ISCC.exe'
+.\windows\scripts\package-desktop.ps1 -Version 0.4.2.0 -ISCC 'C:\path\to\ISCC.exe'
 ```
 
 WebView2 시험은 별도 프로필과 로컬 응답을 사용하며 Windows에 로그인된 사용자 세션에서 실행한다. `--desktop-only`는 바탕화면 전용 설정, 사용자별 자동 실행, EXE 업데이트 검증을 검사한다. `--recovery-only`는 파일 저장 실패 후 로그아웃·재로그인 복구, 노출 5·10·30분과 게시물 10분의 독립적인 수집, 취소·계정 변경을 검사한다. `--updates-only`에는 통신 실패 후 자동 재시도와 성공 후 하루 주기 복귀 검사가 포함된다. 소스에 남아 있는 이전 MSIX·보드 구현은 0.4 설치 파일에 포함하지 않는다.
