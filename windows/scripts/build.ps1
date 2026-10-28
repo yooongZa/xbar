@@ -12,6 +12,8 @@ try {
     if (-not $SkipUiTests) {
     & $Dotnet XBar.WindowsTests/bin/$Configuration/net10.0-windows10.0.19041.0/win-x64/XBar.WindowsTests.dll artifacts/tests/desktop-results.json --desktop-only
     if ($LASTEXITCODE -ne 0) { throw 'Desktop distribution tests failed' }
+    & $Dotnet XBar.WindowsTests/bin/$Configuration/net10.0-windows10.0.19041.0/win-x64/XBar.WindowsTests.dll artifacts/tests/recovery-results.json --recovery-only
+    if ($LASTEXITCODE -ne 0) { throw 'Collector recovery and scheduling tests failed' }
     & $Dotnet XBar.WindowsTests/bin/$Configuration/net10.0-windows10.0.19041.0/win-x64/XBar.WindowsTests.dll artifacts/tests/windows-results.json
     if ($LASTEXITCODE -ne 0) { throw 'Windows integration failed' }
     & $Dotnet XBar.WindowsTests/bin/$Configuration/net10.0-windows10.0.19041.0/win-x64/XBar.WindowsTests.dll artifacts/tests/updater-ui-results.json --updates-only

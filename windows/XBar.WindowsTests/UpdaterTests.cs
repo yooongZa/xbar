@@ -34,6 +34,7 @@ internal static class UpdaterTests
         var release=new UpdateRelease(1,"windows","0.3.0.1","0.3.0",22000,DateTimeOffset.UtcNow,ImmutableDictionary<string,string>.Empty.Add("ko","업데이트 시험").Add("en","Update test"),[new(identity.Name,identity.Publisher,"x64","https://github.com/yooongZa/xbar/releases/download/test/update.msix",package.Length,Convert.ToHexString(SHA256.HashData(package)))]);
         var payload=JsonSerializer.SerializeToUtf8Bytes(release,StateStore.Json);
         var feed=JsonSerializer.SerializeToUtf8Bytes(new UpdateEnvelope(Convert.ToBase64String(payload),Convert.ToBase64String(SignatureAlgorithm.Ed25519.Sign(key,payload))),StateStore.Json);
+        await AutomaticRetryAsync(check,source,identity,feed);
         var root=Path.Combine(Path.GetTempPath(),"XBar-updater-tests-"+Guid.NewGuid().ToString("N")); var store=new StateStore(root);
         int requests=0,paused=0,resumed=0; bool delay=false, timeout=false;
         var handler=new Handler(async(request,token)=> { requests++; if(timeout) throw new TaskCanceledException(); if(delay) await Task.Delay(10000,token); return new(HttpStatusCode.OK){Content=new ByteArrayContent(request.RequestUri==source.Feed?feed:package)}; });
@@ -71,5 +72,35 @@ internal static class UpdaterTests
         using var after=new AppUpdater(store,()=>"ko",()=>{},()=>{},identity with{Version=new(0,3,0,1)},new UpdateClient(source,new Handler((_,_)=>Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound)))),new Installer());
         Check("Relaunch confirms updated version and keeps preferences",after.Phase==UpdatePhase.Updated && !after.Preferences.AutomaticChecks && !File.Exists(Path.Combine(root,"update-install.json")));
         await after.CheckAsync(true); Check("Unpublished public channel has distinct UI state",after.Phase==UpdatePhase.ChannelPending);
+    }
+    private static async Task AutomaticRetryAsync(Action<string,bool,string?> check, UpdateSource source, UpdateIdentity identity, byte[] feed)
+    {
+        void Check(string name,bool value) => check(name,value,null);
+        var now=DateTimeOffset.UtcNow; var previous=now.AddDays(-2);
+        var store=new StateStore(Path.Combine(Path.GetTempPath(),"XBar-update-retry-"+Guid.NewGuid().ToString("N")));
+        store.Write("updates.json",new UpdatePreferences {LastCheck=previous});
+        int requests=0; bool offline=true;
+        var handler=new Handler((_,_)=> { requests++; if(offline) throw new HttpRequestException("Synthetic offline"); return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK){Content=new ByteArrayContent(feed)}); });
+        using var updater=new AppUpdater(store,()=>"ko",()=>{},()=>{},identity,new UpdateClient(source,handler),new Installer(),()=>now);
+        await updater.CheckAutomaticallyAsync();
+        Check("Offline automatic check preserves the last successful persisted check",requests==1 && updater.Phase==UpdatePhase.Error && updater.Preferences.LastCheck==previous && store.Read<UpdatePreferences>("updates.json")?.LastCheck==previous);
+        await updater.CheckAutomaticallyAsync();
+        Check("Failed update check does not spin immediately",requests==1);
+        foreach(var seconds in new[]{30,60,120,240,300,300}) {
+            int before=requests; now=now.AddSeconds(seconds-1); await updater.CheckAutomaticallyAsync();
+            bool delayed=requests==before;
+            now=now.AddSeconds(1); await updater.CheckAutomaticallyAsync();
+            Check($"Automatic update retry waits {seconds}s (attempt {requests})",delayed && requests==before+1 && updater.Phase==UpdatePhase.Error);
+        }
+        offline=false; now=now.AddMinutes(5); await updater.CheckAutomaticallyAsync();
+        Check("Network recovery automatically discovers an update within five minutes",updater.Phase==UpdatePhase.Available && updater.Preferences.LastCheck==now && store.Read<UpdatePreferences>("updates.json")?.LastCheck==now);
+        int successful=requests; now=now.AddHours(23); await updater.CheckAutomaticallyAsync();
+        Check("Successful update check restores the daily interval",requests==successful);
+        now=now.AddHours(1); await updater.CheckAutomaticallyAsync();
+        Check("Next successful daily check runs normally",requests==successful+1 && updater.Phase==UpdatePhase.Available);
+        updater.SetAutomaticChecks(false); now=now.AddDays(1); await updater.CheckAutomaticallyAsync();
+        Check("Disabled automatic checks remain disabled during retry scheduling",requests==successful+1);
+        await updater.CheckAsync(true);
+        Check("Manual update check bypasses the automatic preference and interval",requests==successful+2 && updater.Phase==UpdatePhase.Available);
     }
 }

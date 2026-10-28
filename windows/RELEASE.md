@@ -20,7 +20,7 @@
 
 ```powershell
 .\windows\scripts\build.ps1
-.\windows\scripts\package-desktop.ps1 -Version 0.4.1.0 -ISCC 'C:\path\to\ISCC.exe'
+.\windows\scripts\package-desktop.ps1 -Version 0.4.2.0 -ISCC 'C:\path\to\ISCC.exe'
 ```
 
 `verify-release.ps1`·`sign-release.ps1`·`package.ps1`은 과거 MSIX 경로의 도구다. 새 EXE에 적용해 서명을 요구하지 않는다. 기존 공개 파일을 덮어쓰지 않으며 변경 시 버전을 올린다.

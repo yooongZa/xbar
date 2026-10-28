@@ -14,6 +14,8 @@ internal sealed class AppUpdater : IDisposable
     private readonly IUpdateInstaller installer;
     private readonly Action prepareInstall, resume;
     private readonly Func<string> language;
+    private readonly Func<DateTimeOffset> utcNow;
+    private readonly RefreshRetry checkRetry = new();
     private readonly UpdateConsent consent = new();
     private readonly DispatcherTimer timer = new() { Interval = TimeSpan.FromMinutes(1) };
     private CancellationTokenSource? operation;
@@ -40,9 +42,10 @@ internal sealed class AppUpdater : IDisposable
     }
     private sealed record LabSource(string Url, string PublicKey);
     public AppUpdater(StateStore store, Func<string> language, Action prepareInstall, Action resume,
-        UpdateIdentity? identity = null, UpdateClient? client = null, IUpdateInstaller? installer = null)
+        UpdateIdentity? identity = null, UpdateClient? client = null, IUpdateInstaller? installer = null, Func<DateTimeOffset>? utcNow = null)
     {
         this.store = store; this.language = language; this.prepareInstall = prepareInstall; this.resume = resume;
+        this.utcNow = utcNow ?? (() => DateTimeOffset.UtcNow);
         Identity = identity ?? DesktopUpdateInstaller.Identity(); this.client = client ?? new UpdateClient(Source()); this.installer = installer ?? (Identity.Format == "exe" ? new DesktopUpdateInstaller() : new WindowsUpdateInstaller());
         Preferences = store.Read<UpdatePreferences>("updates.json") ?? new();
         if (store.Read<UpdateReceipt>("update-install.json") is { } receipt)
@@ -50,10 +53,11 @@ internal sealed class AppUpdater : IDisposable
             try { Phase = Identity.Version >= UpdateValidation.ParseVersion(receipt.Version) ? UpdatePhase.Updated : UpdatePhase.Error; } catch { Phase = UpdatePhase.Error; }
             DeleteReceipt();
         }
-        Cleanup(); timer.Tick += async (_, _) => { if (!busy && Preferences.Due(DateTimeOffset.UtcNow)) await CheckAsync(false); };
+        Cleanup(); timer.Tick += async (_, _) => await CheckAutomaticallyAsync();
     }
     public void Start() { timer.Start(); _ = CheckIfDueAsync(); }
-    private async Task CheckIfDueAsync() { await Task.Delay(3000); if (!disposed && Preferences.Due(DateTimeOffset.UtcNow)) await CheckAsync(false); }
+    private async Task CheckIfDueAsync() { await Task.Delay(3000); await CheckAutomaticallyAsync(); }
+    internal Task CheckAutomaticallyAsync() => !disposed && !busy && Preferences.Due(utcNow()) && utcNow() >= checkRetry.Next ? CheckAsync(false) : Task.CompletedTask;
     public void SetAutomaticChecks(bool value)
     { Preferences = Preferences with { AutomaticChecks = value }; Save(); Notify(); }
     private void Save() => store.Write("updates.json", Preferences);
@@ -77,13 +81,17 @@ internal sealed class AppUpdater : IDisposable
     public async Task CheckAsync(bool manual)
     {
         if (disposed || busy) return;
+        if (manual) checkRetry.Reset();
+        checkRetry.Begin(utcNow());
         busy = true; operation?.Dispose(); operation = new(); var token = operation.Token;
         Phase = UpdatePhase.Checking; Notify();
         try
         {
-            Preferences = Preferences with { LastCheck = DateTimeOffset.UtcNow }; Save();
-            var value = await client.CheckAsync(Identity, DateTimeOffset.UtcNow, token);
+            var value = await client.CheckAsync(Identity, utcNow(), token);
             token.ThrowIfCancellationRequested(); if (disposed) return;
+            // Failed/canceled requests retain the last successful check and use a short backoff.
+            var checkedPreferences = Preferences with { LastCheck = utcNow() };
+            store.Write("updates.json", checkedPreferences); Preferences = checkedPreferences; checkRetry.Reset();
             Available = !manual && value?.Release.Version == Preferences.SkippedVersion ? null : value;
             Phase = Available is null ? UpdatePhase.Current : UpdatePhase.Available;
             if (Available is not null) window?.ResetSession();

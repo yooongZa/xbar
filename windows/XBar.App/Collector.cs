@@ -71,12 +71,14 @@ internal sealed class Collector : IDisposable
                 environmentKey = key; wasOnline = online; Invalidate(key != State.Today?.DayKey + "|" + State.Today?.TimeZone);
                 ledger.Reset(); State = State with { Posts = [], PostsAt = null, PostsScope = null, Surges = [], PostsCurrent = false }; retry.Reset();
             }
-            if (Settings.Connected && State.Status != CollectionStatus.NeedsLogin && !sleeping && online && browser?.UserVisible != true && (State.Today is null || !State.Fresh(now, zone) || !State.PostsCurrent || State.PostsAt is null || now - State.PostsAt >= TimeSpan.FromMinutes(10))) RequestRefresh(false);
+            if (Settings.Connected && State.Status != CollectionStatus.NeedsLogin && !sleeping && online && browser?.UserVisible != true && (OverviewDue(now) || PostsDue(now))) RequestRefresh(false);
             if (Settings.Connected && (sleeping || !online)) State = State with { Status = sleeping ? CollectionStatus.Sleeping : CollectionStatus.Offline };
             Publish();
         }
         catch (Exception e) { Failed?.Invoke(e); }
     }
+    private bool OverviewDue(DateTimeOffset now) => !State.Fresh(now, TimeZoneInfo.Local) || now - State.Today!.CapturedAt >= TimeSpan.FromMinutes(Settings.RefreshMinutes);
+    private bool PostsDue(DateTimeOffset now) => !State.PostsCurrent || State.PostsAt is null || now < State.PostsAt || now - State.PostsAt >= TimeSpan.FromMinutes(10);
     internal void CheckEnvironment() => Tick();
     public void SleepChanged(bool value)
     {
@@ -105,53 +107,64 @@ internal sealed class Collector : IDisposable
     private async Task CollectAsync(bool manual)
     {
         var previousPostsCurrent = State.PostsCurrent;
-        var collectPosts = manual || State.PostsAt is null || DateTimeOffset.UtcNow - State.PostsAt >= TimeSpan.FromMinutes(10) || !previousPostsCurrent;
+        var now = DateTimeOffset.UtcNow;
+        var collectOverview = manual || OverviewDue(now);
+        var collectPosts = manual || PostsDue(now);
+        var metric = State.Today;
         Invalidate(false); var token = gate.Generation;
         scan?.Dispose(); scan = new(); scan.CancelAfter(ScanDeadline); var cancellation = scan.Token;
         State = State with { Status = CollectionStatus.Loading, PostsCurrent = false, IsCollecting = true, RetryAt = null }; Publish();
         try
         {
-            overview ??= await CreateSurfaceAsync(true, "X-Bar reader"); cancellation.ThrowIfCancellationRequested();
-            await overview.NavigateAsync(Overview, cancellation);
-            if (!gate.DidLoad(token)) return;
-            PageReading? reading = null; bool recovered = false;
-            for (int i = 0; i < 45; i++)
+            // A posts-only refresh retains the verified overview and its original timestamp.
+            // Both paths still use the same cancellation/generation gate and account checks.
+            if (collectOverview)
             {
-                await Task.Delay(1000, cancellation);
-                reading = await overview.ReadAsync<PageReading>("globalThis.TodayBarExtractor?.advance()", cancellation);
-                if (reading?.Status is "login_required" or "login_session_detected")
+                overview ??= await CreateSurfaceAsync(true, "X-Bar reader"); cancellation.ThrowIfCancellationRequested();
+                await overview.NavigateAsync(Overview, cancellation);
+                if (!gate.DidLoad(token)) return;
+                PageReading? reading = null; bool recovered = false;
+                for (int i = 0; i < 45; i++)
                 {
-                    State = State with { Today = null, Posts = [], Surges = [], Status = CollectionStatus.NeedsLogin }; ledger.Reset(); Publish(); return;
+                    await Task.Delay(1000, cancellation);
+                    reading = await overview.ReadAsync<PageReading>("globalThis.TodayBarExtractor?.advance()", cancellation);
+                    if (reading?.Status is "login_required" or "login_session_detected")
+                    {
+                        State = State with { Today = null, Posts = [], Surges = [], Status = CollectionStatus.NeedsLogin }; ledger.Reset(); Publish(); return;
+                    }
+                    if (reading is not null && !recovered && NavigationPolicy.CanRecover(overview.Url, reading))
+                    { recovered = true; await overview.NavigateAsync(Overview, cancellation); continue; }
+                    if (reading?.Status == "ready" && MetricRecord.ValidAccount(reading.Account) && MetricRecord.ValidDisplay(reading.Display) && reading.DayKey == MetricRecord.Day(DateTimeOffset.UtcNow, TimeZoneInfo.Local) && reading.TimeZone == MetricRecord.ZoneId(TimeZoneInfo.Local)) break;
+                    reading = null;
                 }
-                if (reading is not null && !recovered && NavigationPolicy.CanRecover(overview.Url, reading))
-                { recovered = true; await overview.NavigateAsync(Overview, cancellation); continue; }
-                if (reading?.Status == "ready" && MetricRecord.ValidAccount(reading.Account) && MetricRecord.ValidDisplay(reading.Display) && reading.DayKey == MetricRecord.Day(DateTimeOffset.UtcNow, TimeZoneInfo.Local) && reading.TimeZone == MetricRecord.ZoneId(TimeZoneInfo.Local)) break;
-                reading = null;
+                if (reading is null || !gate.CanAccept(token)) throw new InvalidOperationException("No verified overview reading");
+                if (!string.Equals(State.Today?.Account, reading.Account, StringComparison.OrdinalIgnoreCase))
+                { ledger.Reset(); State = State with { Posts = [], Surges = [], PostsAt = null, PostsScope = null }; collectPosts = true; }
+                metric = new(reading.Display!, reading.DayKey!, reading.TimeZone!, reading.Account!, DateTimeOffset.UtcNow);
             }
-            if (reading is null || !gate.CanAccept(token)) throw new InvalidOperationException("No verified overview reading");
-            if (!string.Equals(State.Today?.Account, reading.Account, StringComparison.OrdinalIgnoreCase))
-            { ledger.Reset(); State = State with { Posts = [], Surges = [], PostsAt = null, PostsScope = null }; collectPosts = true; }
-            var now = DateTimeOffset.UtcNow;
-            State = State with { Status = CollectionStatus.Ready, Today = new(reading.Display!, reading.DayKey!, reading.TimeZone!, reading.Account!, now), Detail = "" };
+            if (metric is null) throw new InvalidOperationException("No verified overview reading");
+            State = State with { Status = CollectionStatus.Ready, Today = metric, Detail = "" };
             Publish();
             if (!collectPosts) { retry.Reset(); State = State with { PostsCurrent = previousPostsCurrent }; Publish(); return; }
+            now = DateTimeOffset.UtcNow;
             var range = DateRange.For(Settings.Period, now, TimeZoneInfo.Local); var period = Settings.Period;
             content ??= await CreateSurfaceAsync(true, "X-Bar content reader"); cancellation.ThrowIfCancellationRequested();
             await content.NavigateAsync(range.Url, cancellation);
+            if (!gate.DidLoad(token)) return;
             ContentReading? previous = null;
             for (int i = 0; i < 30; i++)
             {
                 await Task.Delay(1000, cancellation);
                 var current = await content.ReadAsync<ContentReading>("globalThis.TodayBarContentExtractor?.snapshot()", cancellation);
-                if (current?.Status is "login_required" or "login_session_detected" || current?.Account is string account && !string.Equals(account, reading.Account, StringComparison.OrdinalIgnoreCase))
+                if (current?.Status is "login_required" or "login_session_detected" || current?.Account is string account && !string.Equals(account, metric.Account, StringComparison.OrdinalIgnoreCase))
                 { Invalidate(true); ledger.Reset(); State = State with { Status = CollectionStatus.NeedsLogin, Posts = [], Surges = [] }; Publish(); return; }
-                if (current?.ValidFor(reading.Account!, range, MetricRecord.Day(DateTimeOffset.UtcNow, TimeZoneInfo.Local)) != true || DateRange.For(period, DateTimeOffset.UtcNow, TimeZoneInfo.Local) != range) { previous = null; continue; }
+                if (current?.ValidFor(metric.Account, range, MetricRecord.Day(DateTimeOffset.UtcNow, TimeZoneInfo.Local)) != true || DateRange.For(period, DateTimeOffset.UtcNow, TimeZoneInfo.Local) != range) { previous = null; continue; }
                 if (current.SameScope(previous) && gate.CanAccept(token))
                 {
                     now = DateTimeOffset.UtcNow;
-                    var surges = ledger.Ingest(current.Posts!, reading.Account!, period, now, TimeZoneInfo.Local);
+                    var surges = ledger.Ingest(current.Posts!, metric.Account, period, now, TimeZoneInfo.Local);
                     retry.Reset();
-                    State = State with { Posts = ledger.TopFive(Settings.Growth).ToImmutableArray(), PostsAt = now, PostsCurrent = true, PostsScope = new(reading.Account!, period, MetricRecord.Day(now, TimeZoneInfo.Local), MetricRecord.ZoneId(TimeZoneInfo.Local)),
+                    State = State with { Posts = ledger.TopFive(Settings.Growth).ToImmutableArray(), PostsAt = now, PostsCurrent = true, PostsScope = new(metric.Account, period, MetricRecord.Day(now, TimeZoneInfo.Local), MetricRecord.ZoneId(TimeZoneInfo.Local)),
                         Surges = Settings.Effects ? State.Surges.Where(x => now - x.DetectedAt < TimeSpan.FromMinutes(30)).Concat(surges).ToImmutableArray() : [] };
                     Publish(); return;
                 }
@@ -235,11 +248,19 @@ internal sealed class Collector : IDisposable
     public async Task DisconnectAsync()
     {
         if (disconnecting) return;
-        disconnecting = true; browserGeneration++; CancelLoginWatch(); pendingRefresh = pendingManual = false; Invalidate(true); ledger.Reset();
-        Settings = Settings with { Connected = false, PendingSessionClear = true }; store.Write("settings.json", Settings);
-        State = new() { Settings = Settings, Status = CollectionStatus.Disconnected }; Publish();
-        try { if (running is not null) await running; await web.ClearAsync(); overview = content = browser = null;
-            Settings = Settings with { PendingSessionClear = false }; store.Write("settings.json", Settings); Publish(); }
+        disconnecting = true;
+        try
+        {
+            browserGeneration++; CancelLoginWatch(); pendingRefresh = pendingManual = false; Invalidate(true); ledger.Reset();
+            Settings = Settings with { Connected = false, PendingSessionClear = true };
+            State = new() { Settings = Settings, Status = CollectionStatus.Disconnected };
+            store.Write("settings.json", Settings); Publish();
+            // A previous scan may have faulted while publishing to the same locked files.
+            // Once it has finished, its error must not prevent session cleanup on retry.
+            if (running is not null) { try { await running; } catch (Exception e) { Failed?.Invoke(e); } }
+            await web.ClearAsync(); overview = content = browser = null;
+            Settings = Settings with { PendingSessionClear = false }; store.Write("settings.json", Settings); Publish();
+        }
         finally { disconnecting = false; }
     }
     private void CancelLoginWatch()

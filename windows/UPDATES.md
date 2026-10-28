@@ -1,6 +1,6 @@
 # Windows 앱 업데이트
 
-0.4부터 사용자 계정용 EXE 설치 프로그램으로 업데이트한다. macOS와 같은 흐름으로 설정에서 수동 확인, 하루 한 번 자동 확인, 나중에·건너뛰기·취소, **설치하고 재시작**을 제공한다. 설치는 사용자가 선택한 경우에만 시작한다.
+0.4부터 사용자 계정용 EXE 설치 프로그램으로 업데이트한다. macOS와 같은 흐름으로 설정에서 수동 확인, 하루 한 번 자동 확인, 나중에·건너뛰기·취소, **설치하고 재시작**을 제공한다. 설치는 사용자가 선택한 경우에만 시작한다. 0.4.2부터 확인에 성공한 시각만 저장하며, 통신 실패 시 재시도 간격을 최대 5분까지 늘려 다시 확인한다. 정상 확인 후에는 하루 주기로 돌아간다.
 
 ## 보존과 검증
 
@@ -23,13 +23,13 @@ Windows Restart Manager의 조건 때문에 실행 직후 업데이트하면 준
 고정 주소는 `https://yooongza.github.io/xbar/windows-updates.json`이다. macOS `appcast.xml`을 수정하지 않는다. 기존 macOS Keychain의 업데이트 키를 Sparkle 도구로 사용하며 개인키를 내보내지 않는다.
 
 ```sh
-python3 windows/scripts/prepare-update.py XBar-0.4.1.0-windows-x64-setup.exe \
-  --desktop-version 0.4.1.0 \
+python3 windows/scripts/prepare-update.py XBar-0.4.2.0-windows-x64-setup.exe \
+  --desktop-version 0.4.2.0 \
   --tools /path/to/Sparkle/bin \
   --feed outputs/windows/windows-updates.json \
-  --url https://github.com/yooongZa/xbar/releases/download/windows-v0.4.1-beta.1/XBar-0.4.1.0-windows-x64-setup.exe \
+  --url https://github.com/yooongZa/xbar/releases/download/windows-v0.4.2-beta.1/XBar-0.4.2.0-windows-x64-setup.exe \
   --notes release-notes.json \
-  --verification XBar-0.4.1.0-windows-x64-setup.exe.verification.json
+  --verification XBar-0.4.2.0-windows-x64-setup.exe.verification.json
 ```
 
 보고서의 제품·버전·포맷·해시·길이·무서명 상태가 후보와 다르면 게시 도구가 중단한다. 패키지를 먼저 공개하고 재다운로드로 확인한 뒤 목록을 게시한다. MSIX 개발판으로는 새 EXE가 자동 설치되지 않는다.
