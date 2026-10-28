@@ -33,6 +33,14 @@ Windows is currently a beta with an unsigned installer. SmartScreen may warn, or
 
 **Mac:** DMGを開き、X-Barをアプリケーションフォルダへ移動してください。**Windows:** EXEインストーラーを実行してください。アプリ内でXアカウントを接続できます。MacではSafari接続にも対応しています。GitHubへの登録は不要です。Xアナリティクスを利用できるアカウントが必要です。
 
+## About the numbers / 수치 안내 / 数値について
+
+X-Bar displays values read from X Analytics. Delayed updates or inconsistencies in X Analytics can also appear in the widget, so its figures may differ from other X screens. Compare values using the same date range in X Analytics.
+
+X-Bar는 X 분석 화면의 수치를 읽어 표시합니다. X 분석의 갱신 지연이나 수치 불일치가 위젯에도 반영될 수 있어, 다른 X 화면의 숫자와 차이가 날 수 있습니다. 비교할 때는 X 분석에서 같은 기간을 선택해 확인해 주세요.
+
+X-BarはXアナリティクスに表示される数値を読み取ります。Xアナリティクスの更新遅延や数値の不一致がウィジェットにも反映され、他のX画面と数値が異なる場合があります。比較する際は、Xアナリティクスで同じ期間を選択してください。
+
 ## Source / 소스 코드 / ソースコード
 
 - [한국어 안내·빌드 방법](README.ko.md)
