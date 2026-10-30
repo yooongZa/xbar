@@ -16,7 +16,11 @@ X 분석의 변경된 달력 구조를 지원하고, 날짜·연도를 확인한
 | 실제 계정 | 오늘 노출·게시물 5개, 재실행 후 새 수집 확인 |
 | 사용자 데이터 | 로그인·설정·업데이트 설정·자동 시작 선택 보존 |
 | 격리 업데이트 | 0.4.3.0 → 0.4.4.0 설치·재실행, 설정·합성 세션 보존 |
+| 공개 업데이트 | 실제 설치본 0.4.3.0 → 0.4.4.0 설치·재시작, 새 오늘 노출·게시물 5개 수집 및 최신 버전 표시 확인 |
+| 공개 파일 | EXE·소스·검증 기록·체크섬 재다운로드 일치, feed 서명 검증 통과 |
 | GitHub CI | [소스 빌드·테스트·EXE 패키징 성공](https://github.com/yooongZa/xbar/actions/runs/40987686411) |
+
+원격 시험의 마지막 화면 캡처는 Windows `CopyFromScreen` 오류로 저장하지 못했다. 별도 사후 검사로 설치 버전·프로세스 재시작·최신 버전 창·새 수집·설정 보존을 확인했다.
 
 주요 명령: `dotnet test`, `dotnet publish -p:RestoreLockedMode=true`, `XBar.WindowsTests`, `package-desktop.ps1`, `windows/scripts/prepare-update.py`.
 
