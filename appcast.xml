@@ -6,6 +6,15 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>X-Bar</title>
         <item>
+            <title>0.5.5</title>
+            <pubDate>Fri, 30 Oct 2026 10:44:32 +0900</pubDate>
+            <link>https://yooongza.github.io/xbar/</link>
+            <sparkle:version>14</sparkle:version>
+            <sparkle:shortVersionString>0.5.5</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/yooongZa/xbar/releases/download/v0.5.5/X-Bar-0.5.5-macOS-universal.zip" length="4914936" type="application/octet-stream" sparkle:edSignature="SIuolwfT4rHtz2c6iCL59/8ecD8SQwdUV8CHh2tpuRmmuolol8Y5LumH+O9A7a3whsJ2Rsikx6x0LK/VbFFpBA=="/>
+        </item>
+        <item>
             <title>0.5.4</title>
             <pubDate>Tue, 27 Oct 2026 11:24:21 +0900</pubDate>
             <link>https://yooongza.github.io/xbar/</link>
@@ -23,18 +32,9 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure url="https://github.com/yooongZa/xbar/releases/download/v0.5.3/X-Bar-0.5.3-macOS-universal.zip" length="4893193" type="application/octet-stream" sparkle:edSignature="w81uQqLtg3FBvhUEd+r9jQ9fCjCwwym7kiPF9soqDMR3c481jdiBFQ9fbz5yH6FilaQT8mcqmdSc5WVUHZpSAg=="/>
         </item>
-        <item>
-            <title>0.5.2</title>
-            <pubDate>Fri, 23 Oct 2026 15:51:40 +0900</pubDate>
-            <link>https://yooongza.github.io/xbar/</link>
-            <sparkle:version>11</sparkle:version>
-            <sparkle:shortVersionString>0.5.2</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/yooongZa/xbar/releases/download/v0.5.2/X-Bar-0.5.2-macOS-universal.zip" length="4881939" type="application/octet-stream" sparkle:edSignature="xNvVxmgU1KnbpILOelJlG3eor4LSSaLl8wyVBcMegPpjiED3k2LU4eefs9DXVxceaLNaOJwdaD4ZIqSkDV8TDg=="/>
-        </item>
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: QTB/YbLj8GQYBtGD8+wFEZtk97a3iSGkFUz4pQAE7hEA0G2jD+3wnjk1eZN14N6oUM9Bq9bpieHyQFJ+bSliBw==
+edSignature: +P5qgTYkVP8kEZDVLh/ox5Yzk3aMvdkf3DWbJP53cz4gCKbDX3gh1xR/vbT9d/G9If8PlEcu+S/hOyVMr9FfAQ==
 length: 2436
 -->
