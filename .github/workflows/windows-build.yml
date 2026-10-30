@@ -39,6 +39,8 @@ jobs:
         shell: pwsh
         run: |
           $test = 'windows/XBar.WindowsTests/bin/Release/net10.0-windows10.0.19041.0/win-x64/XBar.WindowsTests.dll'
+          dotnet $test windows/artifacts/tests/calendar-results.json --calendar-only
+          if ($LASTEXITCODE -ne 0) { throw 'Calendar compatibility tests failed' }
           dotnet $test windows/artifacts/tests/layout-results.json --layout-only
           if ($LASTEXITCODE -ne 0) { throw 'Layout tests failed' }
           dotnet $test windows/artifacts/tests/updater-ui-results.json --updates-only

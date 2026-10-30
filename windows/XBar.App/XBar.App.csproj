@@ -8,8 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="../XBar.Core/XBar.Core.csproj" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4314.35" />
-    <Content Include="../../app/Resources/PageContext.js;../../app/Resources/Extractor.js" Link="Scripts/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="Scripts/ContentExtractor.js" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../app/Resources/PageContext.js;../../app/Resources/Extractor.js;../../app/Resources/ContentExtractor.js" Link="Scripts/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <PropertyGroup Condition="'$(UpdaterLab)' == 'true'"><DefineConstants>$(DefineConstants);XBAR_UPDATER_LAB</DefineConstants></PropertyGroup>
   <ItemGroup Condition="'$(UpdaterLab)' == 'true'"><Content Include="../artifacts/updater-lab/UpdaterLab.json" Link="UpdaterLab.json" CopyToOutputDirectory="Always" /></ItemGroup>

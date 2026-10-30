@@ -54,7 +54,7 @@ public static class WidgetCard
                         } });
                     }
                     if (s.Posts.Length == 0) body.Add(Text(T(s.Settings.Growth ? "growth.wait" : "empty"), "Small", true));
-                } else body.Add(Text(T(s.Detail == "content.error" ? "content.error" : "content.wait"), "Small", true));
+                } else body.Add(Text(T(s.Detail is "content.error" or "analysis.changed" ? s.Detail : "content.wait"), "Small", true));
                 var notes = new List<string>();
                 if (status != T("checked") && available) notes.Add(status);
                 if (large && s.Settings.Effects && s.Surges.Any(x => now >= x.DetectedAt && now - x.DetectedAt < TimeSpan.FromMinutes(30))) notes.Add(T("surge"));

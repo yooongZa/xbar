@@ -148,7 +148,7 @@ internal sealed class DesktopWidget : Window
             }
             if (focused is UIElement input && input.IsVisible && rows.Values.Any(row => ReferenceEquals(row, input) || row.IsAncestorOf(input))) input.Focus();
             empty.Visibility = desired.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
-            empty.Text = T(!s.Settings.Connected ? "disconnected" : s.Status == CollectionStatus.NeedsLogin ? "needslogin" : s.Settings.Growth && s.PostsAt is not null && visible ? "growth.wait" : visible && s.PostsCurrent ? "empty" : s.Detail == "content.error" ? "content.error" : "content.wait");
+            empty.Text = T(!s.Settings.Connected ? "disconnected" : s.Status == CollectionStatus.NeedsLogin ? "needslogin" : s.Detail == "analysis.changed" ? "analysis.changed" : s.Settings.Growth && s.PostsAt is not null && visible ? "growth.wait" : visible && s.PostsCurrent ? "empty" : s.Detail == "content.error" ? "content.error" : "content.wait");
             status.Text = L10n.Status(s, now, zone); status.ToolTip = status.Text + (s.PostsAt is { } at ? " · " + at.ToLocalTime().ToString("HH:mm") : "");
             if (visible && !s.PostsCurrent && !s.IsCollecting) status.Text = T("retained") + " · " + status.Text;
             surge.Text = T("surge"); surge.Visibility = s.Settings.Effects && s.Surges.Any(x => now >= x.DetectedAt && now - x.DetectedAt < TimeSpan.FromMinutes(30)) ? Visibility.Visible : Visibility.Collapsed;

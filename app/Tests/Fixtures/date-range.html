@@ -1,0 +1,35 @@
+<!-- Offline fixture for the calendar observed on 2026-10-30; contains no account data. -->
+<button aria-label="계정 메뉴">@fixture</button>
+<button id="date" aria-label="__LABEL__" aria-haspopup="dialog" aria-controls="calendar" aria-expanded="false"><svg data-icon="icon-calendar"></svg></button>
+<div id="calendar" role="dialog" style="display:none">
+  <div id="ends"><button id="start" aria-pressed="false"><span>Start</span><span class="value"></span></button><button id="end" aria-pressed="true"><span>End</span><span class="value"></span></button></div>
+  <button id="month" aria-haspopup="menu"></button>
+  <div role="grid" id="grid"></div>
+</div>
+<button aria-haspopup="dialog">Impressions <span class="sr-only" id="metric">999K</span></button>
+<script>
+(() => {
+  const locale='__LOCALE__', now=new Date(), today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const date=document.getElementById('date'), popup=document.getElementById('calendar');
+  const start=document.getElementById('start'), end=document.getElementById('end'), grid=document.getElementById('grid');
+  let from=new Date(today.getFullYear(),today.getMonth(),today.getDate()-6), to=new Date(today), target='end';
+  const short=d=>new Intl.DateTimeFormat(locale,{month:'long',day:'numeric'}).format(d);
+  const long=d=>new Intl.DateTimeFormat(locale,{weekday:'long',year:'numeric',month:'long',day:'numeric'}).format(d);
+  const draw=()=>{
+    start.querySelector('.value').textContent=short(from);end.querySelector('.value').textContent=short(to);
+    start.setAttribute('aria-pressed',String(target==='start'));end.setAttribute('aria-pressed',String(target==='end'));
+    const month=document.getElementById('month');month.setAttribute('aria-label',new Intl.DateTimeFormat(locale,{year:'numeric',month:'long'}).format(today));
+    grid.replaceChildren();
+    for(let offset=-6;offset<=0;offset++) {
+      const d=new Date(today.getFullYear(),today.getMonth(),today.getDate()+offset), cell=document.createElement('div'), button=document.createElement('button');
+      cell.setAttribute('role','gridcell');cell.setAttribute('aria-selected',String(d>=from&&d<=to));
+      button.textContent=d.getDate();button.setAttribute('aria-label',long(d));
+      button.onclick=()=>{if(target==='start')from=d;else to=d;target=target==='start'?'end':'start';draw();document.getElementById('metric').textContent='999K';setTimeout(()=>document.getElementById('metric').textContent='42',700)};
+      cell.append(button);grid.append(cell);
+    }
+  };
+  date.onclick=()=>{const open=date.getAttribute('aria-expanded')!=='true';date.setAttribute('aria-expanded',String(open));popup.style.display=open?'block':'none'};
+  start.onclick=()=>{target='start';draw()};end.onclick=()=>{target='end';draw()};
+  window.calendarFixture={setRange:(a,b)=>{from=new Date(today);from.setDate(today.getDate()+a);to=new Date(today);to.setDate(today.getDate()+b);draw()},draw};draw();
+})();
+</script>

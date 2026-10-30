@@ -1,4 +1,4 @@
-param([string]$Version = '0.4.3.0', [string]$ISCC = '', [string]$LayoutPath = '', [switch]$UpdaterLab)
+param([string]$Version = '0.4.4.0', [string]$ISCC = '', [string]$LayoutPath = '', [switch]$UpdaterLab)
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 if (!$LayoutPath) { $LayoutPath=Join-Path $root 'artifacts/layout/App' }

@@ -184,6 +184,37 @@ final class Harness: NSObject, NSApplicationDelegate, WKNavigationDelegate {
             result = try await read()
             check("Calendar selects today using visible controls", result["status"] as? String == "ready" && result["display"] as? String == "16.3K")
             check("Still reads after hidden window delay", !window.isVisible && result["display"] as? String == "16.3K")
+            let fixtureURL = URL(fileURLWithPath: CommandLine.arguments[1]).deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("Tests/Fixtures/date-range.html")
+            let fixture = try String(contentsOf: fixtureURL, encoding: .utf8)
+            for (locale, label) in [("ko-KR", "기간 선택"), ("en-US", "Choose a period"), ("ja-JP", "表示する期間")] {
+                await load(fixture.replacingOccurrences(of: "__LOCALE__", with: locale).replacingOccurrences(of: "__LABEL__", with: label))
+                result = try await read()
+                check("Icon calendar waits for live date evidence: " + locale, result["status"] as? String == "wrong_day" && result["display"] == nil)
+                var samples = 0
+                for _ in 0..<18 {
+                    result = try await read("advance")
+                    if result["status"] as? String == "ready" { samples += 1; if samples == 2 { break } } else { samples = 0 }
+                    try await Task.sleep(for: .milliseconds(1000))
+                }
+                check("Icon calendar selects/verifies both endpoints and waits for metrics: " + locale, samples == 2 && result["display"] as? String == "42", String(describing: result))
+                result = try await read()
+                check("Closing calendar invalidates range evidence: " + locale, result["status"] as? String == "wrong_day")
+                _ = try await js("document.getElementById('date').click();calendarFixture.setRange(-6,0);'changed'", world: .page)
+                result = try await read()
+                check("User range change never reuses verified today: " + locale, result["status"] as? String == "wrong_day" && result["display"] == nil)
+                _ = try await js("calendarFixture.setRange(0,0);document.querySelector('[aria-selected=true] button').setAttribute('aria-label','2020년 10월 30일 금요일');'changed'", world: .page)
+                result = try await read()
+                check("Endpoint month/day requires full-year grid evidence: " + locale, result["status"] as? String == "wrong_day")
+                _ = try await js("calendarFixture.setRange(0,0);document.getElementById('date').setAttribute('aria-label','Changed label');document.querySelector('#date svg').remove();'changed'", world: .page)
+                result = try await read()
+                check("Linked calendar structure survives label and icon changes: " + locale, result["status"] as? String == "ready")
+                _ = try await js("const now=new Date();document.getElementById('date').textContent=`${now.getFullYear()}. ${now.getMonth()+1}. ${now.getDate()}.`;calendarFixture.setRange(-6,0);'changed'", world: .page)
+                result = try await read()
+                check("Live calendar overrides stale button text: " + locale, result["status"] as? String == "wrong_day")
+                _ = try await js("const duplicate=document.getElementById('date').cloneNode(true);duplicate.id='duplicate';document.body.append(duplicate);'duplicated'", world: .page)
+                result = try await read("advance")
+                check("Ambiguous calendar controls fail closed: " + locale, result["action"] as? String == "date_control_ambiguous" && result["display"] == nil)
+            }
             await load(dateButton + card() + account + dateScript(), path: "https://x.com/i/account_analytics/content")
             result = try await read()
             check("Content page cannot supply aggregate", result["status"] as? String == "off_page")

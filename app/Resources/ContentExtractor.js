@@ -25,7 +25,7 @@
     const from = week ? allowedStarts[2] : q.get('from'), to = week ? dayKey : q.get('to');
     if ((!week && q.has('days')) || !allowedStarts.includes(from) || to !== dayKey) return {...base,status:'wrong_scope'};
     base.range = {from,to};
-    const dates = [...document.querySelectorAll('button[aria-label]')].filter(el => visible(el) && /^(Select date range|날짜 범위 선택|날짜 선택|日付範囲を選択|日付範囲を選択する|期間を選択)$/i.test(el.getAttribute('aria-label')));
+    const dates = [...document.querySelectorAll('button[aria-label]')].filter(el => visible(el) && /^(Select date range|날짜 범위 선택|날짜 선택|기간 선택|日付範囲を選択|日付範囲を選択する|期間を選択)$/i.test(el.getAttribute('aria-label')));
     if (dates.some(el => clean(el.textContent) && !XBarPageContext.matchesRange(clean(el.textContent), from, to))) return {...base,status:'wrong_scope'};
     const updating = [...document.querySelectorAll('span,div')].some(el => !el.children.length && visible(el) && /^(Updating[.…]*|업데이트 중[.…]*|更新中[.…]*)$/i.test(clean(el.textContent)));
     if (!account || updating || [...document.querySelectorAll('[role="progressbar"], [aria-busy="true"]')].some(visible)) return {...base,status:'loading'};
@@ -38,12 +38,12 @@
       const id = new URL(link.href).pathname.split('/').pop();
       if (seen.has(id)) continue;
       const row = link.parentElement;
-      const metric = icon => {
-        const icons = [...row.querySelectorAll(`svg[data-icon="${icon}"]`)].filter(visible);
+      const metric = (...names) => {
+        const icons = [...row.querySelectorAll(names.map(icon => `svg[data-icon="${icon}"]`).join(','))].filter(visible);
         const values = [...new Set(icons.map(el => clean(el.parentElement.textContent)))];
         return values.length === 1 && valid(values[0]) ? values[0] : null;
       };
-      const impressions = metric('icon-bar-chart'), likes = metric('icon-heart-stroke'), reposts = metric('icon-retweet-stroke');
+      const impressions = metric('icon-bar-chart'), likes = metric('icon-heart-stroke', 'icon-heart'), reposts = metric('icon-retweet-stroke', 'icon-repost');
       if (impressions === null || likes === null || reposts === null) return {...base,status:'unrecognized'};
       const preview = [...row.querySelectorAll('[dir="auto"]')].find(visible);
       const title = Array.from(clean(preview?.textContent || link.getAttribute('aria-label')).replace(/https?:\/\/t\.co\/\S+/g,'').trim()).slice(0,500).join('') || '__XBAR_MEDIA_POST__';

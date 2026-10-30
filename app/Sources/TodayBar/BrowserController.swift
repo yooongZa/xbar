@@ -465,7 +465,9 @@ final class BrowserController: NSObject, ObservableObject, WKNavigationDelegate,
                     case "wrong_day", "manual_date":
                         self.record = nil
                         self.stale = false
-                        self.message = L10n.text("X 날짜 선택에서 시작일과 종료일을 모두 오늘로 지정해 주세요.")
+                        self.message = L10n.text(reading.action?.hasPrefix("calendar_") == true
+                            ? "X 분석 화면을 읽을 수 없습니다. 앱 업데이트를 확인해 주세요."
+                            : "X 날짜 선택에서 시작일과 종료일을 모두 오늘로 지정해 주세요.")
                         return
                     case "unavailable":
                         self.record = nil
@@ -491,7 +493,9 @@ final class BrowserController: NSObject, ObservableObject, WKNavigationDelegate,
                 }
             }
             self.record = nil
-            self.message = L10n.text("오늘 값을 아직 확인하지 못했습니다. X 날짜 범위를 확인해 주세요.")
+            self.message = L10n.text(previous?.status == "unavailable"
+                ? "X 분석 화면을 읽을 수 없습니다. 앱 업데이트를 확인해 주세요."
+                : "오늘 값을 아직 확인하지 못했습니다. X 날짜 범위를 확인해 주세요.")
             if !self.requiresLogin, NavigationPolicy.canAutomaticallyRefresh(self.webView.url) { self.scheduleRetry() }
         }
     }

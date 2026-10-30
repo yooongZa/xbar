@@ -71,7 +71,7 @@ public sealed record ContentPost(string Id, string Title, string Impressions, st
 public sealed record RankedPost(ContentPost Post, double? Increase, bool Approximate, DateTimeOffset ObservedSince);
 public sealed record RepostSurge(ContentPost Post, long Delta, int Minutes, DateTimeOffset DetectedAt);
 public sealed record ContentScope(string Account, ContentPeriod Period, string DayKey, string TimeZone);
-public sealed record PageReading(string Status, string? Display = null, string? DayKey = null, string? TimeZone = null, string? Account = null, bool CanRecover = false);
+public sealed record PageReading(string Status, string? Display = null, string? DayKey = null, string? TimeZone = null, string? Account = null, bool CanRecover = false, string? Action = null);
 public sealed record ContentReading(string Status, string? Account, string? DayKey, DateRange? Range, ContentPost[]? Posts)
 {
     public bool ValidFor(string account, DateRange range, string day) => Status is "ready" or "empty" &&

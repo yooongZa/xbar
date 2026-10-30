@@ -123,11 +123,12 @@ internal sealed class Collector : IDisposable
                 overview ??= await CreateSurfaceAsync(true, "X-Bar reader"); cancellation.ThrowIfCancellationRequested();
                 await overview.NavigateAsync(Overview, cancellation);
                 if (!gate.DidLoad(token)) return;
-                PageReading? reading = null; bool recovered = false;
+                PageReading? reading = null; bool recovered = false; string? lastAction = null;
                 for (int i = 0; i < 45; i++)
                 {
                     await Task.Delay(1000, cancellation);
                     reading = await overview.ReadAsync<PageReading>("globalThis.TodayBarExtractor?.advance()", cancellation);
+                    lastAction = reading?.Action;
                     if (reading?.Status is "login_required" or "login_session_detected")
                     {
                         State = State with { Today = null, Posts = [], Surges = [], Status = CollectionStatus.NeedsLogin }; ledger.Reset(); Publish(); return;
@@ -137,7 +138,11 @@ internal sealed class Collector : IDisposable
                     if (reading?.Status == "ready" && MetricRecord.ValidAccount(reading.Account) && MetricRecord.ValidDisplay(reading.Display) && reading.DayKey == MetricRecord.Day(DateTimeOffset.UtcNow, TimeZoneInfo.Local) && reading.TimeZone == MetricRecord.ZoneId(TimeZoneInfo.Local)) break;
                     reading = null;
                 }
-                if (reading is null || !gate.CanAccept(token)) throw new InvalidOperationException("No verified overview reading");
+                if (reading is null || !gate.CanAccept(token)) {
+                    if (lastAction is "date_control_missing" or "date_control_ambiguous" or "calendar_structure_unrecognized" or "calendar_day_unrecognized" or "metric_card_missing" or "metric_card_ambiguous")
+                        throw new AnalyticsLayoutException();
+                    throw new InvalidOperationException("No verified overview reading");
+                }
                 if (!string.Equals(State.Today?.Account, reading.Account, StringComparison.OrdinalIgnoreCase))
                 { ledger.Reset(); State = State with { Posts = [], Surges = [], PostsAt = null, PostsScope = null }; collectPosts = true; }
                 metric = new(reading.Display!, reading.DayKey!, reading.TimeZone!, reading.Account!, DateTimeOffset.UtcNow);
@@ -184,7 +189,7 @@ internal sealed class Collector : IDisposable
             ReleaseReaders();
             if (gate.Generation == token)
             {
-                State = State with { Status = State.Today is not null && State.Status == CollectionStatus.Ready ? CollectionStatus.Ready : CollectionStatus.Error, Detail = "content.error", PostsCurrent = false };
+                State = State with { Status = State.Today is not null && State.Status == CollectionStatus.Ready ? CollectionStatus.Ready : CollectionStatus.Error, Detail = e is AnalyticsLayoutException ? "analysis.changed" : "content.error", PostsCurrent = false };
                 State = State with { RetryAt = retry.Next }; Publish(); Failed?.Invoke(e);
             }
         }
@@ -329,3 +334,5 @@ internal sealed class Collector : IDisposable
         web.Dispose(); scan?.Dispose();
     }
 }
+
+internal sealed class AnalyticsLayoutException : InvalidOperationException { }

@@ -89,6 +89,7 @@ public static class L10n
         ["empty"] = ["선택한 기간의 게시물이 아직 표시되지 않았습니다. 반영에 시간이 걸릴 수 있습니다.", "Posts for this period are not available yet. X may take time to update.", "この期間の投稿はまだ表示されていません。反映に時間がかかる場合があります。"],
         ["content.wait"] = ["게시물 목록 확인 중", "Checking posts", "投稿を確認中"],
         ["content.error"] = ["게시물을 다시 확인해야 합니다", "Posts need to be checked again", "投稿の再確認が必要です"],
+        ["analysis.changed"] = ["X 화면 판독 실패 · 앱 업데이트 확인", "Cannot read X layout · check app updates", "Xの画面を読み取れません · アプリの更新を確認"],
         ["disconnected"] = ["X 로그인이 필요합니다.", "Sign in to your X account.", "Xにログインしてください。"],
         ["loading"] = ["최신 노출 확인 중", "Checking impressions", "最新のインプレッションを確認中"],
         ["offline"] = ["인터넷 연결 대기", "Waiting for connection", "インターネット接続待ち"],
