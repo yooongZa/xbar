@@ -17,9 +17,24 @@ final class Harness: NSObject, NSApplicationDelegate, WKNavigationDelegate {
         results.append(["test": name, "passed": passed, "detail": detail])
     }
 
-    func load(_ body: String, path: String = "https://x.com/i/account_analytics") async {
+    func load(_ body: String, path: String = "https://x.com/i/account_analytics", date: String? = nil) async {
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .nonPersistent()
+        if let date {
+            let clock = """
+            (() => {
+              const OriginalDate = Date, start = OriginalDate.now(), fixed = new OriginalDate('\(date)').getTime();
+              globalThis.Date = class extends OriginalDate {
+                constructor(...args) { super(...(args.length ? args : [fixed + OriginalDate.now() - start])); }
+                static now() { return fixed + OriginalDate.now() - start; }
+              };
+            })();
+            """
+            for world in [WKContentWorld.page, .defaultClient] {
+                config.userContentController.addUserScript(WKUserScript(source: clock, injectionTime: .atDocumentStart,
+                    forMainFrameOnly: true, in: world))
+            }
+        }
         let extractorURL = URL(fileURLWithPath: CommandLine.arguments[1])
         let context = try! String(contentsOf: extractorURL.deletingLastPathComponent().appendingPathComponent("PageContext.js"), encoding: .utf8)
         let source = context + "\n" + (try! String(contentsOf: extractorURL, encoding: .utf8))
@@ -77,6 +92,26 @@ final class Harness: NSObject, NSApplicationDelegate, WKNavigationDelegate {
             let pageGlobal = try await js("typeof TodayBarExtractor", world: .page)
             check("Extractor isolated from page world", pageGlobal == "undefined")
             check("Read with hidden native window", !window.isVisible && result["display"] as? String == "16.3K")
+
+            for (date, label) in [
+                ("2026-11-01T12:00:00", "2026. 11. 01."),
+                ("2026-01-09T12:00:00", "2026. 01. 09."),
+                ("2026-01-09T12:00:00", "2026. 1. 09."),
+                ("2026-01-09T12:00:00", "2026. 01. 9."),
+                ("2026-11-01T12:00:00", "11/1/2026")
+            ] {
+                await load(dateButton + card() + account + "<script>document.getElementById('date').textContent='\(label)';</script>", date: date)
+                result = try await read("advance")
+                check("Single date accepted without calendar reselection: " + label,
+                      result["status"] as? String == "ready" && result["display"] as? String == "16.3K", String(describing: result))
+            }
+            for label in ["2026. 10. 31.", "2026. 11. 02.", "2025. 11. 01.",
+                          "2026. 10. 31. – 2026. 11. 01.", "2026. 11. 001."] {
+                await load(dateButton + card() + account + "<script>document.getElementById('date').textContent='\(label)';</script>", date: "2026-11-01T12:00:00")
+                result = try await read()
+                check("Non-today or malformed padded date rejected: " + label,
+                      result["status"] as? String == "wrong_day" && result["display"] == nil, String(describing: result))
+            }
 
             await load(account, path: "https://x.com/notifications")
             result = try await read()

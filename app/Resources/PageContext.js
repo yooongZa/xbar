@@ -38,8 +38,14 @@
     const date = key => new Date(...key.split('-').map((n, i) => Number(n) - (i === 1 ? 1 : 0)));
     const start = date(from), end = date(to);
     const normalize = text => clean(text).replace(/\s/g, '').replace(/[–—~〜～]/g, '-');
-    const forms = d => [`${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}.`,
-      `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`];
+    const forms = d => {
+      const year = d.getFullYear(), month = String(d.getMonth()+1), day = String(d.getDate());
+      // X pads Korean month/day labels; Intl may render either component unpadded.
+      const months = [...new Set([month, month.padStart(2,'0')])];
+      const days = [...new Set([day, day.padStart(2,'0')])];
+      return [...months.flatMap(m => days.map(n => `${year}. ${m}. ${n}.`)),
+        `${year}-${month.padStart(2,'0')}-${day.padStart(2,'0')}`, `${month}/${day}/${year}`];
+    };
     const starts = forms(start), ends = forms(end), ranges = [];
     for (const locale of ['ko-KR','en-US','en-GB','ja-JP']) for (const dateStyle of ['short','medium','long']) {
       const format = new Intl.DateTimeFormat(locale,{dateStyle});

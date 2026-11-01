@@ -59,13 +59,9 @@
       [...selected[0].querySelectorAll('button')].some(el => visible(el) && isDay(el, date));
   };
   const singleToday = (label, date) => {
-    const y = date.getFullYear(), m = date.getMonth() + 1, d = date.getDate();
-    const forms = [`${y}. ${m}. ${d}.`, `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`, `${m}/${d}/${y}`];
-    for (const locale of locales) {
-      for (const dateStyle of ['short', 'medium', 'long']) forms.push(new Intl.DateTimeFormat(locale, {dateStyle}).format(date));
-    }
-    // Compare complete strings: a range ending today must never qualify.
-    return forms.some(form => clean(form).replace(/\s/g, '') === clean(label).replace(/\s/g, ''));
+    const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+    // Use the same exact date validation as the content reader.
+    return globalThis.XBarPageContext.matchesRange(label, key, key);
   };
   const snapshot = () => {
     const now = today();

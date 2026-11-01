@@ -93,6 +93,21 @@ final class ContentHarness: NSObject, NSApplicationDelegate, WKNavigationDelegat
             await load(account + row(hidden: true))
             var result = try await read()
             check("Hidden window reads visible metrics only", !window.isVisible && posts(result).first?["impressions"] as? String == "12.3K")
+            for (label, from, to, expected) in [
+                ("2026. 11. 01.", "2026-11-01", "2026-11-01", true),
+                ("2026. 01. 09.", "2026-01-09", "2026-01-09", true),
+                ("2026. 1. 09.", "2026-01-09", "2026-01-09", true),
+                ("2026. 01. 9.", "2026-01-09", "2026-01-09", true),
+                ("2026. 10. 31. – 2026. 11. 01.", "2026-10-31", "2026-11-01", true),
+                ("2025. 12. 31. – 2026. 01. 01.", "2025-12-31", "2026-01-01", true),
+                ("2026. 10. 31.", "2026-11-01", "2026-11-01", false),
+                ("2026. 11. 02.", "2026-11-01", "2026-11-01", false),
+                ("2026. 10. 31. – 2026. 11. 01.", "2026-11-01", "2026-11-01", false),
+                ("2026. 11. 001.", "2026-11-01", "2026-11-01", false)
+            ] {
+                let matched = try await js("JSON.stringify(XBarPageContext.matchesRange('\(label)','\(from)','\(to)'))")
+                check("Padded range matches exact requested dates: \(label) [\(from), \(to)]", matched == String(expected), matched)
+            }
             check("Reads real post identity and repost metric", posts(result).first?["id"] as? String == "2111348825839611989" && posts(result).first?["reposts"] as? String == "26")
             check("Reads likes", posts(result).first?["likes"] as? String == "42")
             check("Verified account", result["account"] as? String == "@fixture")
@@ -179,6 +194,18 @@ final class ContentHarness: NSObject, NSApplicationDelegate, WKNavigationDelegat
                     result = try await read()
                     check("Rendered range \(locale) \(offset) accepted", result["status"] as? String == "ready", String(describing: result))
                 }
+            }
+            for offset in [0, -1, -6] {
+                let dates = """
+                <button id='range' aria-label='기간 선택'></button><script>
+                const a=new Date(),b=new Date();a.setDate(a.getDate()+\(offset));
+                const label=d=>`${d.getFullYear()}. ${String(d.getMonth()+1).padStart(2,'0')}. ${String(d.getDate()).padStart(2,'0')}.`;
+                document.getElementById('range').textContent=\(offset)==0?label(b):`${label(a)} – ${label(b)}`;
+                </script>
+                """
+                await load(account + dates + row(), path: scope(offset))
+                result = try await read()
+                check("Padded rendered content range \(offset) accepted", result["status"] as? String == "ready", String(describing: result))
             }
             await load(account + "<button aria-label='Select date range'><svg width='12' height='12'></svg></button>" + row(), path: "https://x.com/i/account_analytics/content?type=posts&sort=impressions&dir=desc&days=7")
             result = try await read()
