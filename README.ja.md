@@ -2,8 +2,8 @@
 
 | Mac | Windows |
 | --- | --- |
-| **[Mac版をダウンロード](https://github.com/yooongZa/xbar/releases/download/v0.5.4/X-Bar-0.5.4-macOS-universal.dmg)** | **[Windows版をダウンロード](https://github.com/yooongZa/xbar/releases/download/windows-v0.4.2-beta.1/XBar-0.4.2.0-windows-x64-setup.exe)** |
-| 0.5.4 · macOS 14+ · Apple Silicon / Intel | 0.4.2 beta.1 · Windows 11 x64 |
+| **[Mac版をダウンロード](https://github.com/yooongZa/xbar/releases/download/v0.5.7/X-Bar-0.5.7-macOS-universal.dmg)** | **[Windows版をダウンロード](https://github.com/yooongZa/xbar/releases/download/windows-v0.4.2-beta.1/XBar-0.4.2.0-windows-x64-setup.exe)** |
+| 0.5.7 · macOS 14+ · Apple Silicon / Intel | 0.4.2 beta.1 · Windows 11 x64 |
 | DMG · Signed & notarized | EXE · Unsigned installer |
 
 Windowsは未署名EXEのベータ版です。SmartScreenの警告や端末ポリシーによる実行制限が生じる場合があります。 [インストール方法](windows/README.md).
