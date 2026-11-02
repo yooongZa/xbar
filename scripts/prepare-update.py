@@ -36,7 +36,7 @@ def main():
         shutil.copy2(archive, staging/archive.name)
         if args.feed.exists(): shutil.copy2(args.feed, staging/'appcast.xml')
         print(run([args.tools/'generate_appcast', '--account', args.account,
-            '--maximum-deltas', '0', '--download-url-prefix',
+            '--maximum-versions', '0', '--maximum-deltas', '0', '--download-url-prefix',
             f'https://github.com/yooongZa/xbar/releases/download/v{version}/',
             '--link', 'https://yooongza.github.io/xbar/', staging]))
         feed = staging/'appcast.xml'
