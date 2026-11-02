@@ -371,10 +371,14 @@ final class BrowserController: NSObject, ObservableObject, WKNavigationDelegate,
             guard let self else { return }
             defer { if token == self.generation { self.scanTask = nil; self.busy = false; self.onChange?() } }
             var previous: PageReading?
-            for _ in 0..<14 {
+            // Hydration + calendar navigation + two 4-second settling periods
+            // can exceed 14 samples. Stay below the independent 30-second watchdog.
+            for _ in 0..<25 {
                 guard !Task.isCancelled, self.freshness.canRead(token), self.connected, self.networkOnline, !self.sleeping else { return }
                 do {
-                    let reading = try await self.read(advance: true)
+                    // A pending retry only checks whether navigation is safe.
+                    // Do not change the date immediately before reloading the page.
+                    let reading = try await self.read(advance: self.retryAt == nil)
                     guard !Task.isCancelled, self.freshness.canRead(token), self.connected, self.networkOnline, !self.sleeping else { return }
                     if let reason = reading.action {
                         self.logger.info("Extraction stage: \(reason, privacy: .public)")

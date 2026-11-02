@@ -6,6 +6,7 @@ production navigation callbacks, scan cancellation, retry and UI state run intac
 """
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
@@ -44,4 +45,6 @@ with tempfile.TemporaryDirectory(prefix='xbar-navigation-') as directory:
     sources = sorted((root/'Sources/TodayBarCore').glob('*.swift')) + [temp/'BrowserController.swift', temp/'ContentMonitor.swift', root/'Tests/Integration/NavigationRecoveryHarness.swift']
     binary = temp/'NavigationRecovery'
     subprocess.run(['swiftc', '-swift-version', '6', '-parse-as-library', '-framework', 'AppKit', '-framework', 'WebKit', '-framework', 'Network', '-framework', 'CryptoKit', *map(str, sources), '-o', str(binary)], check=True)
-    subprocess.run([str(binary), str(root/'Resources/ContentExtractor.js')], check=True, timeout=120)
+    cases = [sys.argv[1:]] if sys.argv[1:] else [[], ['--calendar-only']]
+    for arguments in cases:
+        subprocess.run([str(binary), str(root/'Resources/ContentExtractor.js'), *arguments], check=True, timeout=120)

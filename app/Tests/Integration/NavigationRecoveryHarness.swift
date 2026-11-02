@@ -8,6 +8,7 @@ import WebKit
     static var redirect = false
     static var stallReads = false
     static var stalledReadStarted = false
+    static var slowCalendar = false
     static let account = "<button aria-label='Account menu'>@fixture</button>"
     static func page(_ body: String) -> String {
         "<meta http-equiv='Content-Security-Policy' content=\"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'\">" + account + body
@@ -15,6 +16,25 @@ import WebKit
     static var responseHTML: String {
         loads += 1
         if redirect { return page("<script>history.replaceState(null,'','/notifications')</script>") }
+        if slowCalendar {
+            let url = URL(fileURLWithPath: CommandLine.arguments[1]).deletingLastPathComponent()
+                .deletingLastPathComponent().appendingPathComponent("Tests/Fixtures/date-range.html")
+            let calendar = try! String(contentsOf: url, encoding: .utf8)
+                .replacingOccurrences(of: "__LOCALE__", with: "ko-KR")
+                .replacingOccurrences(of: "__LABEL__", with: "기간 선택")
+            // Hydration, two endpoint changes, metric settling and two matching
+            // samples must complete in a single production scan, even when hidden.
+            return page("""
+            <div id='hydrating' style='display:none'>\(calendar)</div>
+            <script>
+            calendarFixture.setRange(-6,-1);
+            const outgoing=document.createElement('div');outgoing.dataset.motionPopId='previous-month';
+            const oldGrid=document.getElementById('grid').cloneNode(true);
+            oldGrid.removeAttribute('id');outgoing.append(oldGrid);document.getElementById('calendar').append(outgoing);
+            setTimeout(()=>document.getElementById('hydrating').style.display='block',6500);
+            </script>
+            """)
+        }
         return page("""
         <button id='date' aria-label='Select date range'></button>
         <button aria-haspopup='dialog'>Impressions <span class='sr-only'>40.5K</span></button>
@@ -28,8 +48,8 @@ import WebKit
     var results: [[String: Any]] = []
     func applicationDidFinishLaunching(_ note: Notification) { Task { await run() } }
     func check(_ name: String, _ passed: Bool) { results.append(["test": name, "passed": passed]) }
-    func wait(_ condition: () -> Bool) async -> Bool {
-        for _ in 0..<100 {
+    func wait(seconds: Int = 10, _ condition: () -> Bool) async -> Bool {
+        for _ in 0..<(seconds * 10) {
             if condition() { return true }
             try? await Task.sleep(for: .milliseconds(100))
         }
@@ -49,6 +69,21 @@ import WebKit
         window.isReleasedWhenClosed = false
         window.contentView = controller.webView
         controller.networkChanged(online: true)
+        if CommandLine.arguments.contains("--calendar-only") {
+            RecoveryFixture.slowCalendar = true
+            for visible in [false, true] {
+                if visible { window.orderFront(nil) } else { window.orderOut(nil) }
+                let before = RecoveryFixture.loads
+                controller.connect()
+                let accepted = await wait(seconds: 28) { controller.hasFreshValue }
+                check("Slow calendar completes without restarting, visible=\(visible)",
+                      accepted && controller.record?.display == "42" && RecoveryFixture.loads == before + 1 && controller.retryAt == nil)
+            }
+            controller.stop()
+            window.contentView = nil; window.close()
+            print(String(data: try! JSONSerialization.data(withJSONObject: results, options: [.prettyPrinted, .sortedKeys]), encoding: .utf8)!)
+            exit(results.allSatisfy { $0["passed"] as? Bool == true } ? 0 : 1)
+        }
         controller.connect()
         check("Initial aggregate reading accepted", await wait { controller.hasFreshValue })
         check("Content reader also recovers", await wait { controller.content.updatedAt != nil })

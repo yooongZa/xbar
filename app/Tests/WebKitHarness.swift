@@ -234,6 +234,22 @@ final class Harness: NSObject, NSApplicationDelegate, WKNavigationDelegate {
                 check("Icon calendar selects/verifies both endpoints and waits for metrics: " + locale, samples == 2 && result["display"] as? String == "42", String(describing: result))
                 result = try await read()
                 check("Closing calendar invalidates range evidence: " + locale, result["status"] as? String == "wrong_day")
+                _ = try await js("""
+                document.getElementById('date').click();calendarFixture.setRange(-6,-1);
+                const outgoing=document.createElement('div');outgoing.dataset.motionPopId='previous-month';outgoing.id='outgoing';
+                const oldGrid=document.getElementById('grid').cloneNode(true);oldGrid.removeAttribute('id');outgoing.append(oldGrid);
+                document.getElementById('calendar').append(outgoing);calendarFixture.setRange(0,0);'transition'
+                """, world: .page)
+                result = try await read()
+                check("Retained outgoing month does not invalidate current today: " + locale,
+                      result["status"] as? String == "ready" && result["display"] as? String == "42")
+                _ = try await js("document.getElementById('outgoing').removeAttribute('data-motion-pop-id');'ambiguous'", world: .page)
+                result = try await read()
+                check("Unmarked conflicting calendar remains rejected: " + locale, result["status"] as? String == "wrong_day")
+                _ = try await js("document.getElementById('outgoing').dataset.motionPopId='previous-month';calendarFixture.setRange(-6,0);'changed'", world: .page)
+                result = try await read()
+                check("Outgoing month cannot validate a wrong live range: " + locale, result["status"] as? String == "wrong_day")
+                _ = try await js("document.getElementById('outgoing').remove();document.getElementById('date').click();'closed'", world: .page)
                 _ = try await js("document.getElementById('date').click();calendarFixture.setRange(-6,0);'changed'", world: .page)
                 result = try await read()
                 check("User range change never reuses verified today: " + locale, result["status"] as? String == "wrong_day" && result["display"] == nil)

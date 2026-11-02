@@ -4,6 +4,10 @@
   'use strict';
   const clean = text => (text || '').replace(/[\u200e\u200f\u202a-\u202e]/g, '').replace(/\s+/g, ' ').trim();
   const visible = el => !!el && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
+  // Motion keeps an outgoing month mounted during its exit animation. In a
+  // hidden WebKit view that animation may pause, leaving stale selected cells.
+  // Only the live calendar supplies dates or receives selection clicks.
+  const calendarVisible = el => visible(el) && !el.closest('[data-motion-pop-id]');
   const locales = ['ko-KR', 'en-US', 'en-GB', 'ja-JP'];
   const normalize = text => clean(text).replace(/\s/g, '');
   const validNumber = text => /^(?:0|[1-9]\d{0,14}|[1-9]\d{0,2}(?:,\d{3})+)(?:\.\d{1,3})?(?: ?[KMBkmb천만억万億])?$/.test(text) && text.length <= 24;
@@ -36,7 +40,7 @@
   };
   const endpoints = popup => {
     if (!popup) return [];
-    const buttons = [...popup.querySelectorAll('button[aria-pressed]')].filter(el => visible(el) && !el.closest('[role="grid"]'));
+    const buttons = [...popup.querySelectorAll('button[aria-pressed]')].filter(el => calendarVisible(el) && !el.closest('[role="grid"]'));
     // The range selector has exactly two sibling toggles, in start/end order.
     return buttons.length === 2 && buttons[0].parentElement === buttons[1].parentElement ? buttons : [];
   };
@@ -53,10 +57,10 @@
   };
   const calendarIsToday = (popup, date) => {
     const ends = endpoints(popup);
-    const selected = popup ? [...popup.querySelectorAll('[role="gridcell"][aria-selected="true"]')].filter(visible) : [];
+    const selected = popup ? [...popup.querySelectorAll('[role="gridcell"][aria-selected="true"]')].filter(calendarVisible) : [];
     // The full date on the selected cell verifies the year, which endpoint labels omit.
     return ends.length === 2 && ends.every(el => endpointMatches(el, date)) && selected.length === 1 &&
-      [...selected[0].querySelectorAll('button')].some(el => visible(el) && isDay(el, date));
+      [...selected[0].querySelectorAll('button')].some(el => calendarVisible(el) && isDay(el, date));
   };
   const singleToday = (label, date) => {
     const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
@@ -115,7 +119,7 @@
       return {...reading, status: 'selecting', action: 'open_calendar'};
     }
     if (!popup) return {...reading, status:'selecting', action:'calendar_loading'};
-    const buttons = [...popup.querySelectorAll('button')].filter(visible);
+    const buttons = [...popup.querySelectorAll('button')].filter(calendarVisible);
     const ends = endpoints(popup);
     const start = ends[0];
     const end = ends[1];
