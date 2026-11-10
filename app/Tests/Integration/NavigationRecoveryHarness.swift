@@ -2,6 +2,16 @@
 import AppKit
 import WebKit
 
+// Reproduce WebKit keeping isLoading true even after stopLoading. Other
+// navigation, extraction, and cookie behavior still uses real offline WebKit.
+@MainActor final class RecoveryWebView: WKWebView {
+    var stalled = false
+    override var isLoading: Bool { stalled || super.isLoading }
+    override func stopLoading() {
+        if !stalled { super.stopLoading() }
+    }
+}
+
 @MainActor enum RecoveryFixture {
     static var now = Date()
     static var loads = 0
@@ -122,6 +132,30 @@ import WebKit
             RecoveryFixture.stallReads = false
             advance(controller, 31)
             check("Stalled callback times out and recovers automatically", await wait { RecoveryFixture.loads > before && controller.hasFreshValue })
+
+            // The timeout must escape a view whose loading flag never clears.
+            let stalledView = controller.webView as! RecoveryWebView
+            let dataStore = stalledView.configuration.websiteDataStore
+            let cookie = HTTPCookie(properties: [.name: "recovery-fixture", .value: "preserved",
+                .domain: "x.com", .path: "/", .secure: "TRUE"])!
+            await dataStore.httpCookieStore.setCookie(cookie)
+            stalledView.stalled = true
+            before = RecoveryFixture.loads
+            advance(controller, 46)
+            check("Stuck loading flag recovers automatically", await wait { RecoveryFixture.loads > before && controller.hasFreshValue })
+            check("Timed-out web view is replaced", controller.webView !== stalledView)
+            check("Replacement preserves website data store", controller.webView.configuration.websiteDataStore === dataStore)
+            let cookies = await controller.webView.configuration.websiteDataStore.httpCookieStore.allCookies()
+            check("Replacement preserves session cookies", cookies.contains { $0.name == cookie.name && $0.value == cookie.value })
+            if controller.webView !== stalledView {
+                controller.webView(stalledView, didStartProvisionalNavigation: nil)
+                check("Retired view cannot invalidate recovered reading", controller.hasFreshValue)
+            }
+            stalledView.stalled = false
+            if !controller.hasFreshValue {
+                controller.refresh()
+                _ = await wait { controller.hasFreshValue }
+            }
 
             // A real full navigation to a challenge must remain at that challenge.
             controller.webView.loadHTMLString(RecoveryFixture.page("<input autocomplete='one-time-code'>"), baseURL: URL(string: "https://x.com/account/access"))

@@ -213,8 +213,9 @@ final class BrowserController: NSObject, ObservableObject, WKNavigationDelegate,
         stale = record != nil
         message = L10n.text("오늘 노출 수를 확인하고 있습니다…")
         lastReload = Date()
-        if NavigationPolicy.isOverview(webView.url) { activeNavigation = webView.reloadFromOrigin() }
-        else { activeNavigation = webView.load(URLRequest(url: Self.analyticsURL, cachePolicy: .reloadIgnoringLocalCacheData)) }
+        // An interrupted first navigation can expose the overview URL without a
+        // committed document. Start a request explicitly instead of reloading it.
+        activeNavigation = webView.load(URLRequest(url: Self.analyticsURL, cachePolicy: .reloadIgnoringLocalCacheData))
         onChange?()
     }
 
@@ -296,6 +297,19 @@ final class BrowserController: NSObject, ObservableObject, WKNavigationDelegate,
         onChange?()
     }
 
+    private func replaceStalledWebView() {
+        let previousView = webView
+        previousView.navigationDelegate = nil
+        previousView.uiDelegate = nil
+        // Keep cookies and site storage; only discard the stalled loading state.
+        webView = Self.makeWebView(dataStore: previousView.configuration.websiteDataStore)
+        webView.navigationDelegate = self
+        webView.uiDelegate = self
+        webView.allowsBackForwardNavigationGestures = true
+        navigationGeneration = -1
+        logger.notice("Replaced stalled web view; existing session preserved")
+    }
+
     private func tick() {
         let now = Date()
         let currentDay = MetricRecord.dayKey(for: now)
@@ -313,8 +327,14 @@ final class BrowserController: NSObject, ObservableObject, WKNavigationDelegate,
             content.refreshIfNeeded(account: record?.account)
         }
         guard connected, !disconnecting, networkOnline, !sleeping else { return }
-        if webView.isLoading, now.timeIntervalSince(lastReload) > 45 {
-            invalidateForEnvironment(); message = L10n.text("응답을 기다리고 있습니다. 잠시 후 다시 확인합니다."); scheduleRetry()
+        if webView.isLoading, retryAt == nil, now.timeIntervalSince(lastReload) > 45 {
+            let canRecover = !requiresLogin && NavigationPolicy.canAutomaticallyRefresh(webView.url)
+            invalidateForEnvironment()
+            // stopLoading may leave isLoading stuck true. A fresh view lets the
+            // normal retry/backoff proceed while retired callbacks stay invalid.
+            if canRecover { replaceStalledWebView() }
+            message = L10n.text("응답을 기다리고 있습니다. 잠시 후 다시 확인합니다.")
+            scheduleRetry()
         }
         if scanTask != nil, now.timeIntervalSince(lastScan) > 30 {
             // Cancellation alone cannot stop a stalled WebKit callback. Invalidate

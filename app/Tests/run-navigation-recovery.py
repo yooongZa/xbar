@@ -21,11 +21,13 @@ with tempfile.TemporaryDirectory(prefix='xbar-navigation-') as directory:
     temp = Path(directory)
     browser = (root/'Sources/TodayBar/BrowserController.swift').read_text()
     browser = replace_once(browser, 'WKWebsiteDataStore = .default()', 'WKWebsiteDataStore = .nonPersistent()')
+    browser = replace_once(browser, 'return WKWebView(frame:', 'return RecoveryWebView(frame:')
     browser = replace_once(browser, 'pathMonitor.start(queue: DispatchQueue(label: "dev.xbar.reachability"))', '// Offline: no network monitor.')
     browser = replace_once(browser, 'withTimeInterval: 5, repeats: true', 'withTimeInterval: 3600, repeats: true')
     browser = replace_once(browser, 'Bundle.main.url(forResource: name, withExtension: "js")', 'Optional(URL(fileURLWithPath: CommandLine.arguments[1]).deletingLastPathComponent().appendingPathComponent(name + ".js"))')
     response = 'webView.loadHTMLString(RecoveryFixture.responseHTML, baseURL: Self.analyticsURL)'
-    browser = replace_once(browser, 'webView.reloadFromOrigin()', response)
+    if 'webView.reloadFromOrigin()' in browser:
+        browser = replace_once(browser, 'webView.reloadFromOrigin()', response)
     browser = replace_once(browser, 'webView.load(URLRequest(url: Self.analyticsURL, cachePolicy: .reloadIgnoringLocalCacheData))', response)
     browser = browser.replace('Date()', 'RecoveryFixture.now')
     browser = replace_once(browser, '        let method = advance ? "advance" : "snapshot"', '''        if RecoveryFixture.stallReads {
