@@ -2,8 +2,8 @@
 
 | Mac | Windows |
 | --- | --- |
-| **[Mac 다운로드](https://github.com/yooongZa/xbar/releases/download/v0.5.7/X-Bar-0.5.7-macOS-universal.dmg)** | **[Windows 다운로드](https://github.com/yooongZa/xbar/releases/download/windows-v0.4.2-beta.1/XBar-0.4.2.0-windows-x64-setup.exe)** |
-| 0.5.7 · macOS 14+ · Apple Silicon / Intel | 0.4.2 beta.1 · Windows 11 x64 |
+| **[Mac 다운로드](https://github.com/yooongZa/xbar/releases/download/v0.5.8/X-Bar-0.5.8-macOS-universal.dmg)** | **[Windows 다운로드](https://github.com/yooongZa/xbar/releases/download/windows-v0.4.2-beta.1/XBar-0.4.2.0-windows-x64-setup.exe)** |
+| 0.5.8 · macOS 14+ · Apple Silicon / Intel | 0.4.2 beta.1 · Windows 11 x64 |
 | DMG · Signed & notarized | EXE · Unsigned installer |
 
 Windows는 베타이며 코드 서명 없는 EXE를 제공합니다. SmartScreen 경고 또는 기기 정책에 따른 실행 제한이 있을 수 있습니다. [설치 안내](windows/README.md).

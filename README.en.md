@@ -2,8 +2,8 @@
 
 | Mac | Windows |
 | --- | --- |
-| **[Download for Mac](https://github.com/yooongZa/xbar/releases/download/v0.5.7/X-Bar-0.5.7-macOS-universal.dmg)** | **[Download for Windows](https://github.com/yooongZa/xbar/releases/download/windows-v0.4.2-beta.1/XBar-0.4.2.0-windows-x64-setup.exe)** |
-| 0.5.7 · macOS 14+ · Apple Silicon / Intel | 0.4.2 beta.1 · Windows 11 x64 |
+| **[Download for Mac](https://github.com/yooongZa/xbar/releases/download/v0.5.8/X-Bar-0.5.8-macOS-universal.dmg)** | **[Download for Windows](https://github.com/yooongZa/xbar/releases/download/windows-v0.4.2-beta.1/XBar-0.4.2.0-windows-x64-setup.exe)** |
+| 0.5.8 · macOS 14+ · Apple Silicon / Intel | 0.4.2 beta.1 · Windows 11 x64 |
 | DMG · Signed & notarized | EXE · Unsigned installer |
 
 Windows is a beta with an unsigned EXE. SmartScreen may warn, or device policy may block it. [Installation guide](windows/README.md).
