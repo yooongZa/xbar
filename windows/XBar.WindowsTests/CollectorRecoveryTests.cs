@@ -28,6 +28,7 @@ internal static class CollectorRecoveryTests
     }
     public static async Task Run(Action<string, bool, string?> check)
     {
+        await LoadingRecoveryTests.Run(check);
         await LogoutAsync(check);
         await IntervalsAsync(check);
     }

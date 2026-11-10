@@ -40,6 +40,8 @@ Windows 11 x64, .NET SDK 10.0.107 호환 패치, WebView2 Runtime, Inno Setup 6.
 
 WebView2 시험은 별도 프로필과 로컬 응답을 사용하며 Windows에 로그인된 사용자 세션에서 실행한다. `--desktop-only`는 바탕화면 전용 설정, 사용자별 자동 실행, EXE 업데이트 검증을 검사한다. `--recovery-only`는 파일 저장 실패 후 로그아웃·재로그인 복구, 노출 5·10·30분과 게시물 10분의 독립적인 수집, 취소·계정 변경을 검사한다. `--updates-only`에는 통신 실패 후 자동 재시도와 성공 후 하루 주기 복귀 검사가 포함된다. 소스에 남아 있는 이전 MSIX·보드 구현은 0.4 설치 파일에 포함하지 않는다.
 
+로딩 복구 검증: [2026-11-10 실제 Windows 시험](VALIDATION-LOADING-20261110.md). `--loading-only`는 45초 탐색 제한·연결 중단 후 자동 복구와 저장형 로그인 쿠키 유지를 검사한다.
+
 이전 검증 기록: [0.3.3 자동 로그인](VALIDATION-0.3.3.md), [0.3.2 로그인 UX](VALIDATION-0.3.2.md), [0.3.1 화면 개선](VALIDATION-0.3.1.md), [기존 MSIX 자동 시작](VALIDATION-STARTUP.md). 이전 MSIX의 시험 결과와 새 EXE 배포 결과를 구분한다.
 
 [Windows 개인정보 안내](PRIVACY.md) · [GPL-3.0-only](../LICENSE)
