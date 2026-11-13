@@ -162,9 +162,9 @@ struct MenuPopoverView: View {
                         Picker(L10n.text("오늘 노출 갱신"), selection: Binding(get: { controller.intervalMinutes }, set: { controller.setInterval($0) })) {
                             ForEach([5, 10, 30], id: \.self) { Text(L10n.format("interval.minutes", String($0))).tag($0) }
                         }
-                        Toggle(L10n.text("RT 무지개 효과"), isOn: $content.effectsEnabled).toggleStyle(.switch).controlSize(.small)
-                        DisclosureGroup(L10n.text("RT 감지 기준")) {
-                            Text(L10n.text("5~15분 동안 재게시가 5회 이상 늘고, 10분 환산 증가량이 5회 이상이며 직전 속도의 3배 이상일 때 감지합니다. 최초 두 번은 기준 수집에 사용합니다. 같은 글은 30분에 한 번 알리며 축약된 RT 수는 제외합니다. 감지 후 최대 30분 동안 𝕏에 무지개가 표시됩니다. 동작 줄이기를 켜면 색을 고정합니다. 𝕏-Bar 자체 기준입니다.")).font(.system(size: 10)).foregroundStyle(.secondary).padding(.top, 4)
+                        Toggle(L10n.text("노출 급증 무지개 효과"), isOn: $content.effectsEnabled).toggleStyle(.switch).controlSize(.small)
+                        DisclosureGroup(L10n.text("노출 급증 감지 기준")) {
+                            Text(L10n.text("impressions.surge.rules")).font(.system(size: 10)).foregroundStyle(.secondary).padding(.top, 4)
                         }.font(.system(size: 10)).foregroundStyle(.secondary)
                         Text(L10n.text("콘텐츠는 10분마다 확인합니다.")).font(.system(size: 10)).foregroundStyle(.tertiary)
                     }
@@ -225,7 +225,7 @@ private struct PostPreviewRow: View {
     let rank: Int
     let row: RankedPost
     let growth: Bool
-    let surge: RepostSurge?
+    let surge: ImpressionSurge?
     let accent: Color
     let action: () -> Void
     @State private var hovering = false
@@ -250,7 +250,7 @@ private struct PostPreviewRow: View {
                         if growth { metric(row.post.impressions, icon: "chart.bar", label: L10n.text("노출")) }
                         Spacer(minLength: 0)
                         if surge != nil {
-                            Label("RT", systemImage: "arrow.up.right").font(.system(size: 9, weight: .semibold)).foregroundStyle(accent)
+                            Label(L10n.text("노출 급증"), systemImage: "arrow.up.right").font(.system(size: 9, weight: .semibold)).foregroundStyle(accent)
                         }
                     }
                 }

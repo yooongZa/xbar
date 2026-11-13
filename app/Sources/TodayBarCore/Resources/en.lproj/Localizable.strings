@@ -1,10 +1,10 @@
 /* X-Bar native interface. Keys retain Korean source copy where applicable. */
 "1. X 이메일 또는 사용자 아이디로 로그인\n2. 분석 화면의 오늘 노출 수 확인\n3. 창을 숨기고 메뉴바에서 확인" = "1. Sign in with your X email or username\n2. Check today’s impressions in analytics\n3. Hide the window and use the menu bar";
-"5~15분 동안 재게시가 5회 이상 늘고, 10분 환산 증가량이 5회 이상이며 직전 속도의 3배 이상일 때 감지합니다. 최초 두 번은 기준 수집에 사용합니다. 같은 글은 30분에 한 번 알리며 축약된 RT 수는 제외합니다. 감지 후 최대 30분 동안 𝕏에 무지개가 표시됩니다. 동작 줄이기를 켜면 색을 고정합니다. 𝕏-Bar 자체 기준입니다." = "Detected when reposts rise by at least 5 over 5–15 minutes, the rate is at least 5 per 10 minutes, and at least 3× the previous rate. The first two checks establish a baseline. Each post can trigger once per 30 minutes; abbreviated repost counts are excluded. The X shows a rainbow for up to 30 minutes. Reduce Motion keeps the color still. These are X-Bar’s own rules.";
+"impressions.surge.rules" = "With captures 5–15 minutes apart, impressions must grow by at least 1,000 per 10 minutes and 5× the normal rate observed in the past hour. Before history is available, other posts in the same capture provide the reference. The first capture establishes a baseline. Rounded counts include a margin for display precision and accumulate across consecutive captures for up to one hour until growth can be measured. Each post can trigger once per 30 minutes; the rainbow lasts up to 30 minutes. Reduce Motion keeps the color still.";
 "Google 로그인은 이 앱의 내장 브라우저에서 지원하지 않습니다. X 화면의 이메일 또는 사용자 아이디 입력란을 이용해 주세요." = "Google sign-in isn’t supported in this app’s browser. Use the email or username field on X.";
 "Google 로그인은 지원하지 않습니다. X 화면의 이메일 또는 사용자 아이디로 로그인해 주세요." = "Google sign-in isn’t supported. Sign in on X with your email or username.";
-"RT 감지 기준" = "Repost detection rules";
-"RT 무지개 효과" = "Repost rainbow effect";
+"노출 급증 감지 기준" = "Impression surge detection";
+"노출 급증 무지개 효과" = "Impression surge rainbow";
 "Safari 계정을 연결하고 있습니다…" = "Connecting your Safari account…";
 "Safari 도구 막대의 𝕏-Bar에서 확인 후 연결을 누르세요." = "Open X-Bar in Safari’s toolbar, confirm, then choose Connect.";
 "Safari 로그인 정보를 확인할 수 없습니다." = "Couldn’t verify the Safari sign-in information.";
@@ -50,7 +50,7 @@
 "post.accessibility" = "Rank %@, %@, impressions %@, likes %@, reposts %@";
 "post.growth" = ", growth %@";
 "posts.empty.period" = "No posts in %@.";
-"reposts.surge" = "Repost surge · %@ min +%@";
+"impressions.surge" = "Impression surge · %@ min +%@";
 "window.post" = "Post analytics · %@";
 "갱신과 효과" = "Refresh & effects";
 "게시물 목록을 갱신하지 못했습니다. 마지막으로 확인한 목록을 표시합니다." = "Couldn’t refresh posts. Showing the last checked list.";
@@ -205,3 +205,4 @@
 "자동 실행 설정을 변경하지 못했습니다." = "Could not change the launch at login setting.";
 
 "X 분석 화면을 읽을 수 없습니다. 앱 업데이트를 확인해 주세요." = "Cannot read the X analytics layout. Check for an app update.";
+"노출 급증" = "Surge";

@@ -32,6 +32,7 @@ struct ContentDateRange: Codable, Equatable, Sendable {
 struct DisplayCount: Equatable, Sendable {
     let value: Double
     let approximate: Bool
+    let roundingUnit: Double
 
     init?(_ text: String) {
         guard MetricRecord.isValidDisplay(text) else { return nil }
@@ -39,10 +40,13 @@ struct DisplayCount: Equatable, Sendable {
         let multipliers: [Character: Double] = ["K": 1e3, "k": 1e3, "M": 1e6, "m": 1e6,
             "B": 1e9, "b": 1e9, "천": 1e3, "만": 1e4, "억": 1e8, "万": 1e4, "億": 1e8]
         let multiplier = compact.last.flatMap { multipliers[$0] }
-        guard let number = Double(multiplier == nil ? compact : String(compact.dropLast())),
+        let numeric = multiplier == nil ? compact : String(compact.dropLast())
+        guard let number = Double(numeric),
               number.isFinite, number * (multiplier ?? 1) <= 9e15 else { return nil }
         value = number * (multiplier ?? 1)
         approximate = multiplier != nil || compact.contains(".")
+        let decimals = numeric.split(separator: ".").dropFirst().first?.count ?? 0
+        roundingUnit = approximate ? (multiplier ?? 1) * pow(10, -Double(decimals)) : 0
     }
 
     var exactInteger: Int? { approximate ? nil : Int(value) }
@@ -94,72 +98,130 @@ struct RankedPost: Identifiable, Equatable, Sendable {
     }
 }
 
-struct RepostSurge: Identifiable, Equatable, Sendable {
+struct ImpressionSurge: Identifiable, Equatable, Sendable {
     let post: ContentPost
     let delta: Int
     let minutes: Int
     let detectedAt: Date
+    let approximate: Bool
     var id: String { post.id }
-    var label: String { L10n.format("reposts.surge", String(minutes), String(delta)) }
+    var label: String { L10n.format("impressions.surge", String(minutes), "\(approximate ? "≈" : "")\(delta.formatted())") }
 }
 
-/// App-defined signal, not an X viral classification. Only exact repost counters qualify.
-struct RepostDetector: Sendable {
+/// Compares each post's recent impression growth with normal growth observed in this scope.
+struct ImpressionDetector: Sendable {
     private struct Sample: Sendable {
-        var count: Int
-        var at: Date
-        var previousRate: Double?
+        let count: DisplayCount
+        let at: Date
+        var latestValue: Double
+        var latestAt: Date
+
+        init(count: DisplayCount, at: Date) {
+            self.count = count
+            self.at = at
+            latestValue = count.value
+            latestAt = at
+        }
+    }
+    private struct Observation: Sendable {
+        let post: ContentPost
+        let delta: Double
+        let rate: Double
+        let minimumRate: Double
+        let elapsed: TimeInterval
+        let approximate: Bool
+    }
+    private struct NormalRate: Sendable {
+        let rate: Double
+        let at: Date
     }
     private var samples: [String: Sample] = [:]
+    private var history: [NormalRate] = []
     private var lastAlerts: [String: Date] = [:]
 
-    mutating func observe(_ post: ContentPost, at now: Date) -> RepostSurge? {
-        lastAlerts = lastAlerts.filter { now.timeIntervalSince($0.value) < 30 * 60 }
-        guard let count = DisplayCount(post.reposts)?.exactInteger else {
-            samples.removeValue(forKey: post.id)
-            return nil
-        }
-        guard var old = samples[post.id] else {
+    mutating func observe(_ posts: [ContentPost], at now: Date) -> [ImpressionSurge] {
+        lastAlerts = lastAlerts.filter { (0..<1800).contains(now.timeIntervalSince($0.value)) }
+        history = history.filter { (0..<3600).contains(now.timeIntervalSince($0.at)) }
+        var observations: [Observation] = []
+        var seen = Set<String>()
+        for post in posts where post.isValid && seen.insert(post.id).inserted {
+            guard let count = DisplayCount(post.impressions) else { continue }
+            guard let old = samples[post.id] else {
+                samples[post.id] = Sample(count: count, at: now)
+                continue
+            }
+            let elapsed = now.timeIntervalSince(old.at)
+            let gap = now.timeIntervalSince(old.latestAt)
+            let approximate = count.approximate || old.count.approximate
+            // Sleep, clock changes and corrected counts start a new observation window.
+            guard gap > 0, gap <= 900, elapsed <= 3600,
+                  elapsed <= 900 || approximate, count.value >= old.latestValue else {
+                samples[post.id] = Sample(count: count, at: now)
+                continue
+            }
+            var continued = old
+            continued.latestValue = count.value
+            continued.latestAt = now
+            guard elapsed >= 300 else { samples[post.id] = continued; continue }
+            let delta = count.value - old.count.value
+            // Reserve one display unit at each endpoint for rounding or truncation.
+            let minimumDelta = max(0, delta - count.roundingUnit - old.count.roundingUnit)
+            // Keep coarse counts across consecutive captures until growth is measurable.
+            // Otherwise 1.0M -> 1.1M -> 1.2M would be discarded on every capture.
+            if approximate && minimumDelta == 0 && elapsed < 3600 {
+                samples[post.id] = continued
+                continue
+            }
+            observations.append(Observation(post: post, delta: delta, rate: delta / elapsed * 600,
+                minimumRate: minimumDelta / elapsed * 600, elapsed: elapsed,
+                approximate: approximate))
             samples[post.id] = Sample(count: count, at: now)
-            return nil
         }
-        let elapsed = now.timeIntervalSince(old.at)
-        // A sleep/offline gap or a corrected counter cannot become a burst on return.
-        guard elapsed > 0, elapsed <= 15 * 60, count >= old.count else {
-            samples[post.id] = Sample(count: count, at: now)
-            return nil
+        samples = samples.filter { seen.contains($0.key) }
+        let normalRate = Self.median(history.map(\.rate))
+        var events: [ImpressionSurge] = []
+        for observation in observations {
+            // Before history exists, other posts in this capture establish the reference.
+            let peers = observations.filter { $0.post.id != observation.post.id && $0.minimumRate > 0 }.map(\.rate)
+            let reference = normalRate ?? Self.median(peers) ?? 0
+            let qualifies = observation.minimumRate >= max(1000, reference * 5)
+            if qualifies {
+                if lastAlerts[observation.post.id] == nil {
+                    lastAlerts[observation.post.id] = now
+                    events.append(ImpressionSurge(post: observation.post, delta: Int(observation.delta),
+                        minutes: Int((observation.elapsed / 60).rounded()), detectedAt: now,
+                        approximate: observation.approximate))
+                }
+            } else if observation.minimumRate > 0 {
+                // A detected burst must not immediately raise the definition of normal.
+                history.append(NormalRate(rate: observation.rate, at: now))
+            }
         }
-        guard elapsed >= 5 * 60 else { return nil } // manual refresh does not move the comparison baseline
-        let delta = count - old.count
-        let rate = Double(delta) / elapsed * 600
-        let qualifies = delta >= 5 && rate >= 5 &&
-            old.previousRate.map { rate >= max($0, 1) * 3 } == true &&
-            lastAlerts[post.id].map { now.timeIntervalSince($0) >= 30 * 60 } != false
-        old.count = count
-        old.at = now
-        old.previousRate = rate
-        if qualifies { lastAlerts[post.id] = now }
-        samples[post.id] = old
-        return qualifies ? RepostSurge(post: post, delta: delta,
-            minutes: Int((elapsed / 60).rounded()), detectedAt: now) : nil
+        // Twenty posts, observed at most once per five minutes over one hour.
+        history = Array(history.suffix(240))
+        return events
     }
 
-    mutating func retain(ids: Set<String>) { samples = samples.filter { ids.contains($0.key) } }
+    private static func median(_ values: [Double]) -> Double? {
+        let sorted = values.filter { $0 > 0 }.sorted()
+        guard !sorted.isEmpty else { return nil }
+        let middle = sorted.count / 2
+        return sorted.count.isMultiple(of: 2) ? (sorted[middle - 1] + sorted[middle]) / 2 : sorted[middle]
+    }
 }
 
 struct PostLedger: Sendable {
     private struct Baseline: Sendable { let count: DisplayCount; let at: Date }
     private var baselines: [String: Baseline] = [:]
-    private var detector = RepostDetector()
+    private var detector = ImpressionDetector()
     private(set) var context: String?
     private(set) var rows: [RankedPost] = []
 
     mutating func reset() { self = PostLedger() }
 
-    mutating func ingest(_ posts: [ContentPost], account: String, at now: Date, zone: TimeZone = .current) -> [RepostSurge] {
+    mutating func ingest(_ posts: [ContentPost], account: String, at now: Date, zone: TimeZone = .current) -> [ImpressionSurge] {
         let key = "\(account.lowercased())|\(MetricRecord.dayKey(for: now, in: zone))|\(zone.identifier)"
         if context != key { reset(); context = key }
-        var events: [RepostSurge] = []
         var seen = Set<String>()
         rows = posts.filter { $0.isValid && seen.insert($0.id).inserted }.map { post in
             let count = DisplayCount(post.impressions)!
@@ -168,15 +230,13 @@ struct PostLedger: Sendable {
                 baseline = Baseline(count: count, at: now)
                 baselines[post.id] = baseline
             }
-            if let event = detector.observe(post, at: now) { events.append(event) }
             let base = baseline!
             return RankedPost(post: post, increase: now > base.at ? count.value - base.count.value : nil,
                 approximate: count.approximate || base.count.approximate, observedSince: base.at)
         }
         // Bounds state and avoids comparing a returning row across an unobserved gap.
         baselines = baselines.filter { seen.contains($0.key) }
-        detector.retain(ids: seen)
-        return events
+        return detector.observe(rows.map(\.post), at: now)
     }
 
     func topFive(growth: Bool) -> [RankedPost] {

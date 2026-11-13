@@ -25,28 +25,6 @@ public sealed class RegressionTests
     public void InvalidPostLinksRejected(string id)
     { Assert.False(Post(id).IsValid); Assert.False(new AppCommand("post", id).IsValid); }
 
-    [Fact] public void SurgeNeedsThreeSamplesAndCooldown()
-    {
-        var ledger = new PostLedger();
-        IReadOnlyList<RepostSurge> Ingest(int minute, string rt) => ledger.Ingest([Post(rt: rt)], "@one", ContentPeriod.Today, Start.AddMinutes(minute), Zone);
-        Assert.Empty(Ingest(0, "10")); Assert.Empty(Ingest(10, "11"));
-        Assert.Equal(6, Assert.Single(Ingest(20, "17")).Delta); Assert.Empty(Ingest(30, "40"));
-    }
-    [Fact] public void ManualRefreshKeepsObservationWindow()
-    {
-        var l = new PostLedger();
-        void Ingest(int m, string rt) => l.Ingest([Post(rt: rt)], "@one", ContentPeriod.Today, Start.AddMinutes(m), Zone);
-        Ingest(0, "10"); Ingest(10, "10"); Ingest(11, "12");
-        Assert.Equal(6, Assert.Single(l.Ingest([Post(rt: "16")], "@one", ContentPeriod.Today, Start.AddMinutes(20), Zone)).Delta);
-    }
-    [Fact] public void ApproximateCountersAndSleepNeverTriggerSurge()
-    {
-        var l = new PostLedger();
-        for (int i = 0; i < 4; i++) Assert.Empty(l.Ingest([Post(rt: $"{i + 1}K")], "@one", ContentPeriod.Today, Start.AddMinutes(i * 10), Zone));
-        l.Reset(); l.Ingest([Post()], "@one", ContentPeriod.Today, Start, Zone);
-        l.Ingest([Post(rt: "11")], "@one", ContentPeriod.Today, Start.AddMinutes(10), Zone);
-        Assert.Empty(l.Ingest([Post(rt: "100")], "@one", ContentPeriod.Today, Start.AddHours(1), Zone));
-    }
     [Fact] public void RankingSeparatesLifetimeAndObservedGrowth()
     {
         var l = new PostLedger(); var a = "2111348825839611989"; var b = "2111348825839611988";

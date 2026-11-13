@@ -7,14 +7,14 @@ final class PostMetricsTests: XCTestCase {
         ContentPost(id: id, title: "테스트 게시물", impressions: impressions, likes: "5", reposts: rt)
     }
 
-    func testRoundedNumbersAreApproximateAndCannotTriggerRT() {
+    func testRoundedNumbersRetainApproximation() {
         XCTAssertEqual(DisplayCount("1.2만")?.value, 12000)
         XCTAssertEqual(DisplayCount("12,345")?.exactInteger, 12345)
         XCTAssertNil(DisplayCount("1K")?.exactInteger)
         XCTAssertNil(DisplayCount("NaN"))
         XCTAssertNil(DisplayCount("999999999999999B"))
-        var detector = RepostDetector()
-        for i in 0..<4 { XCTAssertNil(detector.observe(post(rt: "\(i+1)K"), at: start.addingTimeInterval(Double(i*600)))) }
+        XCTAssertEqual(DisplayCount("868K")?.roundingUnit, 1000)
+        XCTAssertEqual(DisplayCount("1.3M")?.roundingUnit, 100000)
     }
 
     func testAnalyticsLinkIsStrictAndUsesPostID() {
@@ -22,51 +22,6 @@ final class PostMetricsTests: XCTestCase {
         for id in ["../../home", "123?redirect=evil", "https://evil.example", "2111348825839611989\n"] {
             XCTAssertNil(post(id).analyticsURL)
         }
-    }
-
-    func testThreeSamplesRequiredAndThresholdIsRelativePlusAbsolute() {
-        var detector = RepostDetector()
-        XCTAssertNil(detector.observe(post(rt: "10"), at: start))
-        XCTAssertNil(detector.observe(post(rt: "11"), at: start.addingTimeInterval(600)))
-        let signal = detector.observe(post(rt: "17"), at: start.addingTimeInterval(1200))
-        XCTAssertEqual(signal?.delta, 6)
-        XCTAssertEqual(signal?.minutes, 10)
-        XCTAssertNil(detector.observe(post(rt: "40"), at: start.addingTimeInterval(1800)), "cooldown")
-    }
-
-    func testHighSteadyRateAndTinyGrowthDoNotAlert() {
-        var detector = RepostDetector()
-        XCTAssertNil(detector.observe(post(rt: "10"), at: start))
-        XCTAssertNil(detector.observe(post(rt: "20"), at: start.addingTimeInterval(600)))
-        XCTAssertNil(detector.observe(post(rt: "35"), at: start.addingTimeInterval(1200)))
-        var small = RepostDetector()
-        _ = small.observe(post(rt: "0"), at: start)
-        _ = small.observe(post(rt: "0"), at: start.addingTimeInterval(600))
-        XCTAssertNil(small.observe(post(rt: "4"), at: start.addingTimeInterval(1200)))
-    }
-
-    func testManualRefreshDoesNotResetBurstWindow() {
-        var detector = RepostDetector()
-        _ = detector.observe(post(rt: "10"), at: start)
-        _ = detector.observe(post(rt: "10"), at: start.addingTimeInterval(600))
-        XCTAssertNil(detector.observe(post(rt: "12"), at: start.addingTimeInterval(660)))
-        XCTAssertEqual(detector.observe(post(rt: "16"), at: start.addingTimeInterval(1200))?.delta, 6)
-    }
-
-    func testSleepAndDecreasingCountersResetDetection() {
-        var detector = RepostDetector()
-        _ = detector.observe(post(rt: "10"), at: start)
-        _ = detector.observe(post(rt: "11"), at: start.addingTimeInterval(600))
-        XCTAssertNil(detector.observe(post(rt: "100"), at: start.addingTimeInterval(3600)))
-        XCTAssertNil(detector.observe(post(rt: "101"), at: start.addingTimeInterval(4200)))
-        XCTAssertNil(detector.observe(post(rt: "5"), at: start.addingTimeInterval(4800)))
-        XCTAssertNil(detector.observe(post(rt: "100"), at: start.addingTimeInterval(5400)))
-    }
-
-    func testLongRefreshIntervalDoesNotPretendTenMinutes() {
-        var detector = RepostDetector()
-        _ = detector.observe(post(rt: "10"), at: start)
-        XCTAssertNil(detector.observe(post(rt: "30"), at: start.addingTimeInterval(1800)))
     }
 
     func testRankingSeparatesLifetimeAndObservedGrowth() {

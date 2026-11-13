@@ -54,11 +54,20 @@ public sealed record MetricRecord(string Display, string DayKey, string TimeZone
 public sealed record DisplayCount(double Value, bool Approximate)
 {
     public long? ExactInteger => Approximate ? null : (long)Value;
+    private static double Multiplier(char suffix) => suffix switch { 'K' or 'k' or '천' => 1e3, 'M' or 'm' => 1e6, 'B' or 'b' => 1e9, '만' or '万' => 1e4, '억' or '億' => 1e8, _ => 1d };
+    public static double RoundingUnit(string text)
+    {
+        var compact = text.Replace(",", "").Replace(" ", "");
+        var multiplier = Multiplier(compact[^1]);
+        var numeric = multiplier == 1 ? compact : compact[..^1];
+        var dot = numeric.IndexOf('.');
+        return multiplier == 1 && dot < 0 ? 0 : multiplier * Math.Pow(10, -(dot < 0 ? 0 : numeric.Length - dot - 1));
+    }
     public static DisplayCount? Parse(string? text)
     {
         if (!MetricRecord.ValidDisplay(text)) return null;
         var compact = text!.Replace(",", "").Replace(" ", "");
-        var multiplier = compact[^1] switch { 'K' or 'k' or '천' => 1e3, 'M' or 'm' => 1e6, 'B' or 'b' => 1e9, '만' or '万' => 1e4, '억' or '億' => 1e8, _ => 1d };
+        var multiplier = Multiplier(compact[^1]);
         if (!double.TryParse(multiplier == 1 ? compact : compact[..^1], NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var value) || !double.IsFinite(value) || value * multiplier > 9e15) return null;
         return new(value * multiplier, multiplier != 1 || compact.Contains('.'));
     }
@@ -69,7 +78,7 @@ public sealed record ContentPost(string Id, string Title, string Impressions, st
     [JsonIgnore] public string AnalyticsUrl => $"https://x.com/i/account_analytics/content/{Id}";
 }
 public sealed record RankedPost(ContentPost Post, double? Increase, bool Approximate, DateTimeOffset ObservedSince);
-public sealed record RepostSurge(ContentPost Post, long Delta, int Minutes, DateTimeOffset DetectedAt);
+public sealed record ImpressionSurge(ContentPost Post, long Delta, int Minutes, DateTimeOffset DetectedAt, bool Approximate = false);
 public sealed record ContentScope(string Account, ContentPeriod Period, string DayKey, string TimeZone);
 public sealed record PageReading(string Status, string? Display = null, string? DayKey = null, string? TimeZone = null, string? Account = null, bool CanRecover = false, string? Action = null);
 public sealed record ContentReading(string Status, string? Account, string? DayKey, DateRange? Range, ContentPost[]? Posts)
@@ -88,7 +97,7 @@ public sealed record Snapshot
     public CollectionStatus Status { get; init; } = CollectionStatus.Disconnected;
     public MetricRecord? Today { get; init; }
     public ImmutableArray<RankedPost> Posts { get; init; } = [];
-    public ImmutableArray<RepostSurge> Surges { get; init; } = [];
+    public ImmutableArray<ImpressionSurge> Surges { get; init; } = [];
     public DateTimeOffset? PostsAt { get; init; }
     public bool PostsCurrent { get; init; }
     public ContentScope? PostsScope { get; init; }

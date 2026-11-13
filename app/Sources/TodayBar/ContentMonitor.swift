@@ -11,7 +11,7 @@ final class ContentMonitor: NSObject, ObservableObject, WKNavigationDelegate {
     @Published private(set) var message = L10n.text("연결 후 콘텐츠를 확인합니다.")
     @Published private(set) var updatedAt: Date?
     @Published private(set) var stale = false
-    @Published private(set) var surges: [RepostSurge] = []
+    @Published private(set) var surges: [ImpressionSurge] = []
     @Published private(set) var unread = false
     @Published var effectsEnabled = UserDefaults.standard.object(forKey: "rtEffects") as? Bool ?? true {
         didSet {
@@ -119,7 +119,7 @@ final class ContentMonitor: NSObject, ObservableObject, WKNavigationDelegate {
                             ? (self.period == .today ? L10n.text("X 분석에 오늘 게시물이 아직 표시되지 않습니다.") : L10n.format("posts.empty.period", self.period.title))
                             : L10n.text("게시물 목록을 확인했습니다.")
                         if posts.isEmpty { self.surges = []; self.unread = false }
-                        self.logger.notice("Accepted content reading: \(posts.count, privacy: .public) posts; temporary reader released after capture")
+                        self.logger.notice("Accepted content reading: \(posts.count, privacy: .public) posts; impression surges: \(events.count, privacy: .public); effects enabled: \(self.effectsEnabled, privacy: .public); temporary reader released after capture")
                         if !events.isEmpty && self.effectsEnabled { self.unread = true; self.onSurge?() }
                         return
                     }

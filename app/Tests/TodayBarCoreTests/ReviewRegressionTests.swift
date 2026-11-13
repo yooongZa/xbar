@@ -64,22 +64,6 @@ final class ReviewRegressionTests: XCTestCase {
         XCTAssertEqual(ledger.topFive(growth: false).count, 1)
     }
 
-    func testRTCooldownSurvivesLeavingListAndExpiresAfterThirtyMinutes() {
-        var detector = RepostDetector()
-        let start = Date(timeIntervalSince1970: 1_792_650_000)
-        func observe(_ rt: Int, _ seconds: Double) -> RepostSurge? {
-            detector.observe(ContentPost(id: "2111348825839611989", title: "Test", impressions: "100", likes: "0", reposts: String(rt)), at: start.addingTimeInterval(seconds))
-        }
-        XCTAssertNil(observe(10, 0)); XCTAssertNil(observe(11, 600))
-        XCTAssertNotNil(observe(17, 1200))
-        detector.retain(ids: [])
-        XCTAssertNil(observe(18, 1260)); XCTAssertNil(observe(19, 1560))
-        XCTAssertNil(observe(30, 1860), "11 minutes later must remain in cooldown")
-        detector.retain(ids: [])
-        XCTAssertNil(observe(31, 2460)); XCTAssertNil(observe(32, 2760))
-        XCTAssertNotNil(observe(40, 3060), "31 minutes later can alert again after rebuilding samples")
-    }
-
     @MainActor
     func testCancellationRestoresCookieSnapshotAtEveryStorageBoundary() async {
         // Initial read, each delete, and each write, including final write/commit boundary.
