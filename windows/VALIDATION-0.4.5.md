@@ -10,6 +10,7 @@
 - Windows 달력·화면 배치·업데이트 UI·설정·바탕화면 배포·릴리스 도구 검사 통과.
 - 설치 EXE의 제품·버전·길이·SHA-256 검증 통과. 기존 코드 서명 없는 베타 배포 방식을 유지했다.
 - 업데이트 JSON은 기존 고정 키로 서명·검증했다.
+- 공개 EXE·소스·검증 파일을 다시 다운로드해 SHA-256을 대조했다. 공개 업데이트 JSON과 다운로드 페이지의 0.4.5 배포를 확인했다.
 - 실제 사용자 Windows 세션의 설치·공개 업데이트는 미확인. 테스트 PC에 연결되지 않아 CI의 격리된 화면·업데이트 검증을 수행했다.
 
 주요 명령: `dotnet test`, `windows/scripts/build.ps1`, `package-desktop.ps1`, `prepare-update.py`, `gh workflow run`, `gh release`.
