@@ -2,8 +2,8 @@
 
 | Mac | Windows |
 | --- | --- |
-| **[Mac 다운로드](https://github.com/yooongZa/xbar/releases/download/v0.5.8/X-Bar-0.5.8-macOS-universal.dmg)** | **[Windows 다운로드](https://github.com/yooongZa/xbar/releases/download/windows-v0.4.2-beta.1/XBar-0.4.2.0-windows-x64-setup.exe)** |
-| 0.5.8 · macOS 14+ · Apple Silicon / Intel | 0.4.2 beta.1 · Windows 11 x64 |
+| **[Mac 다운로드](https://github.com/yooongZa/xbar/releases/download/v0.5.9/X-Bar-0.5.9-macOS-universal.dmg)** | **[Windows 다운로드](https://github.com/yooongZa/xbar/releases/download/windows-v0.4.5-beta.1/XBar-0.4.5.0-windows-x64-setup.exe)** |
+| 0.5.9 · macOS 14+ · Apple Silicon / Intel | 0.4.5 beta.1 · Windows 11 x64 |
 | DMG · Signed & notarized | EXE · Unsigned installer |
 
 Windows는 베타이며 코드 서명 없는 EXE를 제공합니다. SmartScreen 경고 또는 기기 정책에 따른 실행 제한이 있을 수 있습니다. [설치 안내](windows/README.md).
@@ -41,7 +41,7 @@ Safari에서 평소 쓰던 로그인과 저장된 암호를 사용할 수 있습
 - 계정 전체의 **오늘 노출 수**를 메뉴바에서 확인합니다.
 - **오늘 / 최근 2일 / 최근 7일**에 게시한 글 중 앱이 확인한 상위 5개와 노출·좋아요·재게시 수를 봅니다.
 - 글을 누르면 해당 글의 분석 화면이 열립니다.
-- 재게시가 빠르게 늘면 작은 무지개 효과가 나타납니다. 설정에서 끌 수 있습니다.
+- 게시글의 노출이 평소보다 빠르게 늘면 작은 무지개 효과가 나타납니다. 설정에서 끌 수 있습니다.
 
 기간 선택은 **게시일** 기준입니다. 글별 수치는 게시 후 누적 값이며, 선택한 기간에 발생한 노출만을 뜻하지 않습니다. 오늘 총노출에는 이전에 게시한 글도 포함됩니다. X-Bar가 확인한 목록의 순위이므로 계정의 모든 글을 포괄한다고 보장하지 않습니다.
 

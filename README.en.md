@@ -2,8 +2,8 @@
 
 | Mac | Windows |
 | --- | --- |
-| **[Download for Mac](https://github.com/yooongZa/xbar/releases/download/v0.5.8/X-Bar-0.5.8-macOS-universal.dmg)** | **[Download for Windows](https://github.com/yooongZa/xbar/releases/download/windows-v0.4.2-beta.1/XBar-0.4.2.0-windows-x64-setup.exe)** |
-| 0.5.8 · macOS 14+ · Apple Silicon / Intel | 0.4.2 beta.1 · Windows 11 x64 |
+| **[Download for Mac](https://github.com/yooongZa/xbar/releases/download/v0.5.9/X-Bar-0.5.9-macOS-universal.dmg)** | **[Download for Windows](https://github.com/yooongZa/xbar/releases/download/windows-v0.4.5-beta.1/XBar-0.4.5.0-windows-x64-setup.exe)** |
+| 0.5.9 · macOS 14+ · Apple Silicon / Intel | 0.4.5 beta.1 · Windows 11 x64 |
 | DMG · Signed & notarized | EXE · Unsigned installer |
 
 Windows is a beta with an unsigned EXE. SmartScreen may warn, or device policy may block it. [Installation guide](windows/README.md).
@@ -41,7 +41,7 @@ Use your email or username on the X page inside X-Bar. Google sign-in is not sup
 - Your account’s **total impressions today**, in the menu bar.
 - Up to five top posts observed by the app, published **Today / Last 2 days / Last 7 days**, with impressions, likes, and reposts.
 - A post’s analytics page when you click its row.
-- A small rainbow effect when repost activity rises quickly. You can turn it off in Settings.
+- A small rainbow effect when a post’s impressions grow much faster than usual. You can turn it off in Settings.
 
 The period filter refers to the **publication date**. Per-post numbers are lifetime totals, not impressions earned only within the selected period. Today’s account total can include older posts. Rankings cover posts the app has observed and are not guaranteed to include every post on the account.
 

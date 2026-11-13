@@ -2,8 +2,8 @@
 
 | Mac | Windows |
 | --- | --- |
-| **[Mac版をダウンロード](https://github.com/yooongZa/xbar/releases/download/v0.5.8/X-Bar-0.5.8-macOS-universal.dmg)** | **[Windows版をダウンロード](https://github.com/yooongZa/xbar/releases/download/windows-v0.4.2-beta.1/XBar-0.4.2.0-windows-x64-setup.exe)** |
-| 0.5.8 · macOS 14+ · Apple Silicon / Intel | 0.4.2 beta.1 · Windows 11 x64 |
+| **[Mac版をダウンロード](https://github.com/yooongZa/xbar/releases/download/v0.5.9/X-Bar-0.5.9-macOS-universal.dmg)** | **[Windows版をダウンロード](https://github.com/yooongZa/xbar/releases/download/windows-v0.4.5-beta.1/XBar-0.4.5.0-windows-x64-setup.exe)** |
+| 0.5.9 · macOS 14+ · Apple Silicon / Intel | 0.4.5 beta.1 · Windows 11 x64 |
 | DMG · Signed & notarized | EXE · Unsigned installer |
 
 Windowsは未署名EXEのベータ版です。SmartScreenの警告や端末ポリシーによる実行制限が生じる場合があります。 [インストール方法](windows/README.md).
@@ -41,7 +41,7 @@ macOS 14以降 · Apple Silicon / Intel · 한국어 / English / 日本語
 - アカウント全体の **今日のインプレッション** をメニューバーに表示。
 - **今日 / 過去2日 / 過去7日** に投稿された、アプリが確認できた上位5件のインプレッション・いいね・リポスト数。
 - 投稿をクリックすると、その投稿の分析画面へ移動。
-- リポストが急増したときの小さな虹色のエフェクト。設定でオフにできます。
+- 投稿の表示回数が普段より急に増えたときの小さな虹色のエフェクト。設定でオフにできます。
 
 期間は **投稿日** を基準にしています。投稿ごとの数字は投稿後の累計で、選択期間内だけのインプレッションではありません。アカウントの今日の合計には以前の投稿も含まれます。順位はアプリが確認した投稿に基づき、アカウント内のすべての投稿を網羅するとは限りません。
 
