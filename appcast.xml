@@ -6,6 +6,15 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>X-Bar</title>
         <item>
+            <title>0.5.10</title>
+            <pubDate>Sun, 15 Nov 2026 16:47:41 +0900</pubDate>
+            <link>https://yooongza.github.io/xbar/</link>
+            <sparkle:version>19</sparkle:version>
+            <sparkle:shortVersionString>0.5.10</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/yooongZa/xbar/releases/download/v0.5.10/X-Bar-0.5.10-macOS-universal.zip" length="4979744" type="application/octet-stream" sparkle:edSignature="XbtCvWvQa2Fqm+FmUIZW99En/0OG6guQOXv8eaU87c8Ws8eLuNeWX4V54GhPiEjOXPOusOjrKkceyhu0IAyBAA=="/>
+        </item>
+        <item>
             <title>0.5.9</title>
             <pubDate>Fri, 13 Nov 2026 21:28:14 +0900</pubDate>
             <link>https://yooongza.github.io/xbar/</link>
@@ -71,6 +80,6 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: PkpVOTWODc/ULIK0oNkQ4MKtQH7RoYSdgAg6Lp4UzJcAn9LFvGMWnA3ixxlwyYyE3WFgiOTh0vHiRxRO2UGkBQ==
-length: 5112
+edSignature: G9Dgd1MGCVVs9bN5Krs4pdQVEFtMS1wUajXAwCw3r0Nn5WUmI3RGJYWJMcBCL2X/VDHN2l/k+y3lg455JRaRCQ==
+length: 5785
 -->
