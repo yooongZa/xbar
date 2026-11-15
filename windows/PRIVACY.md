@@ -1,10 +1,10 @@
 # X-Bar Windows privacy
 
-Updated: 2026-10-27. This document describes the Windows implementation. The macOS policy is available on the [project website](https://yooongza.github.io/xbar/privacy-en.html).
+Updated: 2026-11-15. This document describes the Windows implementation. The macOS policy is available on the [project website](https://yooongza.github.io/xbar/privacy-en.html).
 
 ## X account and local data
 
-X-Bar displays the signed-in user's own X Analytics pages. Sign-in takes place in Microsoft WebView2 with an app-specific local profile. The developer does not receive your password, cookies, posts or analytics values and does not operate an analytics backend. X pages and their loaded resources are subject to [X's privacy policy](https://x.com/en/privacy).
+X-Bar displays the signed-in user's own X Analytics pages. Sign-in takes place in Microsoft WebView2 with an app-specific local profile. The developer does not receive your password, cookies, posts or analytics values. X pages and their loaded resources are subject to [X's privacy policy](https://x.com/en/privacy).
 
 The app stores preferences, the latest collected results and its browser profile on the current Windows user's device. It does not build a server-side history of your metrics. Diagnostic logging records exception types, error codes and method names rather than page bodies or credentials. X-Bar contains no advertising or developer analytics SDK.
 
@@ -13,6 +13,10 @@ The app stores preferences, the latest collected results and its browser profile
 Automatic app update checks are enabled by default and run at most once per 24 hours when due; manual checks are also available. Checks use GitHub Pages and selected downloads use GitHub Releases. Update requests do not contain X credentials or analytics values. GitHub receives ordinary connection information such as IP addresses and HTTP headers under the [GitHub privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement). Turn off automatic checks in Settings. Installing an app update requires your choice.
 
 WebView2 loads X content and its runtime is serviced by Microsoft. Operating-system services have their own settings and policies. See the [Microsoft privacy statement](https://privacy.microsoft.com/en-us/privacystatement).
+
+## Update download counts
+
+Starting with 0.4.6, a verified update download sends a random installation identifier, platform, previous and target app versions, and an event identifier to stats.lazinessisthemotherof.dev. The service hashes the installation identifier, excludes repeated downloads of the same version, and retains records for up to 90 days. X credentials, posts and impression values are excluded. Delivery retries preserve the same event identifier, and reporting failures do not interrupt updates.
 
 ## Disconnect and uninstall
 

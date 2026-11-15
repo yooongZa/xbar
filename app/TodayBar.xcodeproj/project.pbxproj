@@ -26,6 +26,7 @@
 		4BE393C1F4936C973BDA2F1B /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC254AEBA561017B990ACEDC /* DashboardView.swift */; };
 		4F39D75CFC7B281343128FC0 /* ContentMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38DB7B6EBB01DA18271195DC /* ContentMonitor.swift */; };
 		5B2AF9C123F23B23EF9C2ECA /* SetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FA7A641FF5239DACAD9C959 /* SetupView.swift */; };
+		5E8786BA56F087704C34C356 /* UpdateDownloadMetrics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D44FD956EF3314262B08DD9 /* UpdateDownloadMetrics.swift */; };
 		60995A2A332ACC218D5AD4CF /* L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03DB95A6F4015E2FE7D32C29 /* L10n.swift */; };
 		6D3EDDBD9E2EC98D268053F0 /* SafariServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A5AE96C0DE88BD327E709291 /* SafariServices.framework */; };
 		6E691CF3EE8F70FBE5197D9E /* icon-128.png in Resources */ = {isa = PBXBuildFile; fileRef = A163B889457F0E7DAD835282 /* icon-128.png */; };
@@ -34,6 +35,7 @@
 		8025D875ED249CE4B9556CC1 /* manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = 6956655B94BBD64FED03FB79 /* manifest.json */; };
 		829B3294FE30AA5A3637FD03 /* SessionTransfer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B25A94D8C6983108FD3F3D5 /* SessionTransfer.swift */; };
 		8445FA3D62431D0A4F8DDE1A /* MenuPopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE0BF024C874F4AE1E893973 /* MenuPopoverView.swift */; };
+		87D279089FF8C6D12DA01A8F /* AppUpdateMetrics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12737A328942ADFBDB8FBD34 /* AppUpdateMetrics.swift */; };
 		8B617CD0BC99F449B5BCC86B /* CryptoKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D73292439FE9CA9DE99FD33B /* CryptoKit.framework */; };
 		8F080C54656368009651EC1A /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 50277FA7F725CE3B1497F3C3 /* WebKit.framework */; };
 		8F0C5D5CB4ED6A95FA2AA866 /* popup.css in Resources */ = {isa = PBXBuildFile; fileRef = DC6E64B6E5D2D0D991AD6B1F /* popup.css */; };
@@ -84,12 +86,14 @@
 		03DB95A6F4015E2FE7D32C29 /* L10n.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = L10n.swift; sourceTree = "<group>"; };
 		1067E7D101EFC72A395E193D /* SafariStatusProbe.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SafariStatusProbe.m; sourceTree = "<group>"; };
 		116D4B1360108270807F4EFE /* SafariExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SafariExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		12737A328942ADFBDB8FBD34 /* AppUpdateMetrics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateMetrics.swift; sourceTree = "<group>"; };
 		15F41578E546D94F2756ABCB /* cookie-policy.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "cookie-policy.js"; sourceTree = "<group>"; };
 		20A3C9D9A6EA5914458B80BB /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		20AC6BB6A087B9A37259EA1D /* popup.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = popup.html; sourceTree = "<group>"; };
 		235C0F8F05A65ED3A5559BDF /* UpdateInstallationConsent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateInstallationConsent.swift; sourceTree = "<group>"; };
 		27539CB90825E5E8D4A53DAF /* BrowserController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserController.swift; sourceTree = "<group>"; };
 		29FB522B20F4C6506FA92578 /* PageContext.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = PageContext.js; sourceTree = "<group>"; };
+		2D44FD956EF3314262B08DD9 /* UpdateDownloadMetrics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateDownloadMetrics.swift; sourceTree = "<group>"; };
 		38D9C4E9FBAF92534745769F /* icon-32.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-32.png"; sourceTree = "<group>"; };
 		38DB7B6EBB01DA18271195DC /* ContentMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentMonitor.swift; sourceTree = "<group>"; };
 		3CD1C85F8A491ED37C67803C /* SafariConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafariConnection.swift; sourceTree = "<group>"; };
@@ -172,6 +176,7 @@
 				E2806499C35E0AEA951F1F35 /* PostMetrics.swift */,
 				A1EA9EE63CC535CB58B7FF9F /* RefreshGate.swift */,
 				9B25A94D8C6983108FD3F3D5 /* SessionTransfer.swift */,
+				2D44FD956EF3314262B08DD9 /* UpdateDownloadMetrics.swift */,
 				235C0F8F05A65ED3A5559BDF /* UpdateInstallationConsent.swift */,
 			);
 			name = TodayBarCore;
@@ -207,6 +212,7 @@
 			isa = PBXGroup;
 			children = (
 				20A3C9D9A6EA5914458B80BB /* AppDelegate.swift */,
+				12737A328942ADFBDB8FBD34 /* AppUpdateMetrics.swift */,
 				C025F98412F5DE4853BAC510 /* AppUpdater.swift */,
 				27539CB90825E5E8D4A53DAF /* BrowserController.swift */,
 				38DB7B6EBB01DA18271195DC /* ContentMonitor.swift */,
@@ -408,6 +414,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AFC6DC9692DF84E81B317103 /* AppDelegate.swift in Sources */,
+				87D279089FF8C6D12DA01A8F /* AppUpdateMetrics.swift in Sources */,
 				0CEDC21F19FB7CDB56FCE426 /* AppUpdater.swift in Sources */,
 				326D1BE7F0BF3C3076B725FE /* BrowserController.swift in Sources */,
 				4F39D75CFC7B281343128FC0 /* ContentMonitor.swift in Sources */,
@@ -424,6 +431,7 @@
 				5B2AF9C123F23B23EF9C2ECA /* SetupView.swift in Sources */,
 				06F62A6142ECED2327E5E181 /* StatusSymbol.swift in Sources */,
 				E0261C42FCD000E3FE1166E7 /* TransferFiles.swift in Sources */,
+				5E8786BA56F087704C34C356 /* UpdateDownloadMetrics.swift in Sources */,
 				F16FC613ED36A9E9CE33173D /* UpdateInstallationConsent.swift in Sources */,
 				0B0F296C9BF455083D0D6EF8 /* main.swift in Sources */,
 			);
@@ -556,7 +564,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 495S4FVMCB;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -577,7 +585,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.5.9;
+				MARKETING_VERSION = 0.5.10;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -644,7 +652,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 495S4FVMCB;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -659,7 +667,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.5.9;
+				MARKETING_VERSION = 0.5.10;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

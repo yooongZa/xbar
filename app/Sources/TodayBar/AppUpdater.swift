@@ -4,7 +4,7 @@ import Sparkle
 
 /// One updater per process. Sparkle owns scheduling, signature checks and installation.
 @MainActor
-final class AppUpdater: NSObject, ObservableObject, @preconcurrency SPUStandardUserDriverDelegate {
+final class AppUpdater: NSObject, ObservableObject, @preconcurrency SPUStandardUserDriverDelegate, SPUUpdaterDelegate {
     @Published private(set) var canCheckForUpdates = false
     @Published private(set) var automaticChecks = false
     @Published private(set) var availableVersion: String?
@@ -12,6 +12,7 @@ final class AppUpdater: NSObject, ObservableObject, @preconcurrency SPUStandardU
     private var updater: SPUUpdater!
     private var userDriver: AppUpdateUserDriver!
     private var started = false
+    private let metrics = AppUpdateMetrics.make()
 
     override init() {
         super.init()
@@ -20,7 +21,7 @@ final class AppUpdater: NSObject, ObservableObject, @preconcurrency SPUStandardU
         // the MainActor runtime check at that boundary instead of moving UI state off it.
         userDriver = AppUpdateUserDriver(hostBundle: .main, delegate: self)
         updater = SPUUpdater(hostBundle: .main, applicationBundle: .main,
-            userDriver: userDriver, delegate: nil)
+            userDriver: userDriver, delegate: self)
         updater.publisher(for: \.canCheckForUpdates)
             .assign(to: &$canCheckForUpdates)
         updater.publisher(for: \.automaticallyChecksForUpdates)
@@ -32,10 +33,17 @@ final class AppUpdater: NSObject, ObservableObject, @preconcurrency SPUStandardU
         do {
             try updater.start()
             started = true
+            Task { await metrics?.flush() }
             startupError = nil
         } catch {
             startupError = error.localizedDescription
         }
+    }
+
+    func updater(_ updater: SPUUpdater, didDownloadUpdate item: SUAppcastItem) {
+        guard let from = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String else { return }
+        let to = item.displayVersionString
+        Task { await metrics?.record(fromVersion: from, toVersion: to) }
     }
 
     func setAutomaticChecks(_ enabled: Bool) {

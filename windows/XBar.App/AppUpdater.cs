@@ -11,6 +11,7 @@ internal sealed class AppUpdater : IDisposable
 {
     private readonly StateStore store;
     private readonly UpdateClient client;
+    private readonly UpdateDownloadMetrics? metrics;
     private readonly IUpdateInstaller installer;
     private readonly Action prepareInstall, resume;
     private readonly Func<string> language;
@@ -44,6 +45,7 @@ internal sealed class AppUpdater : IDisposable
     public AppUpdater(StateStore store, Func<string> language, Action prepareInstall, Action resume,
         UpdateIdentity? identity = null, UpdateClient? client = null, IUpdateInstaller? installer = null, Func<DateTimeOffset>? utcNow = null)
     {
+        metrics = identity is null && client is null && installer is null && AppContext.GetData("XBar.UpdaterLab") is not true ? new(store) : null;
         this.store = store; this.language = language; this.prepareInstall = prepareInstall; this.resume = resume;
         this.utcNow = utcNow ?? (() => DateTimeOffset.UtcNow);
         Identity = identity ?? DesktopUpdateInstaller.Identity(); this.client = client ?? new UpdateClient(Source()); this.installer = installer ?? (Identity.Format == "exe" ? new DesktopUpdateInstaller() : new WindowsUpdateInstaller());
@@ -55,7 +57,7 @@ internal sealed class AppUpdater : IDisposable
         }
         Cleanup(); timer.Tick += async (_, _) => await CheckAutomaticallyAsync();
     }
-    public void Start() { timer.Start(); _ = CheckIfDueAsync(); }
+    public void Start() { _ = metrics?.FlushAsync(); timer.Start(); _ = CheckIfDueAsync(); }
     private async Task CheckIfDueAsync() { await Task.Delay(3000); await CheckAutomaticallyAsync(); }
     internal Task CheckAutomaticallyAsync() => !disposed && !busy && Preferences.Due(utcNow()) && utcNow() >= checkRetry.Next ? CheckAsync(false) : Task.CompletedTask;
     public void SetAutomaticChecks(bool value)
@@ -120,6 +122,7 @@ internal sealed class AppUpdater : IDisposable
         try
         {
             await client.DownloadAsync(candidate, file, new Progress<double>(p => { if (!disposed && Phase == UpdatePhase.Downloading) { Progress = p; Notify(); } }), token);
+            metrics?.Record(Identity.Version.ToString(), candidate.Release.Version);
             token.ThrowIfCancellationRequested(); Phase = UpdatePhase.Preparing; Notify();
             await installer.PrepareAsync(file, token);
             // Re-read the verified file immediately before handing it to the OS.
@@ -160,5 +163,5 @@ internal sealed class AppUpdater : IDisposable
     }
     private void DeleteReceipt() { try { File.Delete(Path.Combine(store.Root, "update-install.json")); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { } }
     public void Dispose()
-    { if (disposed) return; disposed = true; timer.Stop(); consent.Invalidate(); operation?.Cancel(); operation?.Dispose(); client.Dispose(); if (window is not null) { window.AllowClose = true; window.Close(); } }
+    { if (disposed) return; disposed = true; timer.Stop(); consent.Invalidate(); operation?.Cancel(); operation?.Dispose(); client.Dispose(); metrics?.Dispose(); if (window is not null) { window.AllowClose = true; window.Close(); } }
 }
